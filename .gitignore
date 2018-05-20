@@ -1,0 +1,13 @@
+# tmp files
+*.log
+*.pot
+*.pyc
+*.pye
+__pycache__
+
+
+# DB
+db.sqlite3
+
+media
+migrations
