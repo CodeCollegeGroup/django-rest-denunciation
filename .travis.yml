@@ -11,30 +11,26 @@ install:
   - sudo curl -L https://github.com/docker/compose/releases/download/1.20.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
   - sudo chmod +x /usr/local/bin/docker-compose
 
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./code_college/cc-test-reporter
-  - chmod +x ./code_college/cc-test-reporter
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./django_rest_denunciation/cc-test-reporter
+  - chmod +x ./django_rest_denunciation/cc-test-reporter
 
 before_script:
-  - sudo docker-compose run migrations ./cc-test-reporter before-build
+  - sudo docker-compose run command ./cc-test-reporter before-build
 
-# using run migrations because hasn't pre-requisites like web
 script:
-  - sudo docker-compose run migrations flake8 --exclude=migrations
-  - sudo docker-compose run migrations pylint $(find -name __init__.py | cut -d '/' -f 2 | sort -u | tr '\n' ' ')
+  - sudo docker-compose run command flake8 --exclude=migrations,manage.py,settings.py,wsgi.py
+  - sudo docker-compose run command pylint $(find -name __init__.py | cut -d '/' -f 2 | sort -u | tr '\n' ' ')
   - sudo docker-compose up -d
 
-  - sudo docker-compose run migrations mkdir -p tests_coverage
-  - sudo docker-compose run migrations coverage run ./manage.py test
+  - sudo docker-compose run command mkdir -p tests_coverage
+  - sudo docker-compose run command coverage run ./manage.py test
 
-  - sudo docker-compose run migrations coverage report
-  - sudo docker-compose run migrations coverage xml
+  - sudo docker-compose run command coverage report
+  - sudo docker-compose run command coverage xml
 
 after_script:
-    - sudo docker-compose run migrations ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+    - sudo docker-compose run command ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 
 branch:
   only:
     - master
-
-notifications:
-  slack: codecollege-desenho:4t0jP0tm4iWr4L0o9xLqwGsx

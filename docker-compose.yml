@@ -2,10 +2,10 @@ version: '3'
 
 services:
   web:
-    container_name: 'django-rest-report_web'
+    container_name: 'django_rest_denunciation_web'
     build: .
     volumes:
-      - .:/home/django-rest-report
+      - .:/home/django_rest_denunciation
     command: python manage.py runserver 0.0.0.0:8000
     depends_on:
       - migrate
@@ -14,26 +14,26 @@ services:
     tty: True
 
   migrate:
-    container_name: 'django-rest-report_migrate'
+    container_name: 'django_rest_denunciation_migrate'
     build: .
     volumes:
-      - .:/home/django-rest-report
+      - .:/home/django_rest_denunciation
     command: python manage.py migrate
     depends_on:
       - migrations
     tty: True
 
   migrations:
-    container_name: 'django-rest-report_migrations'
+    container_name: 'django_rest_denunciation_migrations'
     build: .
     volumes:
-      - .:/home/django-rest-report
+      - .:/home/django_rest_denunciation
     command: python manage.py makemigrations
     tty: True
 
   command:
-    container_name: 'django-rest-report_command'
+    container_name: 'django_rest_denunciation_command'
     build: .
     volumes:
-      - .:/home/django-rest-report
+      - .:/home/django_rest_denunciation
     tty: True
