@@ -1,0 +1,21 @@
+[run]
+branch = True
+data_file = tests_coverage/coverage_data
+omit =
+    manage.py,
+    */settings.py,
+    */wsgi.py,
+    */__init__.py,
+	*/migrations/*
+    */tests.py
+
+[report]
+fail_under = 70
+precision = 2
+exclude_lines =
+    raise AssertionError,
+    raise NotImplementedError
+
+[html]
+directory = tests_coverage/html
+title = "Cobertura de testes - Django Rest Denunciation"
