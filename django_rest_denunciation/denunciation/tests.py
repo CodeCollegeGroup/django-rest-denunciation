@@ -2,7 +2,7 @@ from django.test import TestCase
 from .models import Denunciation, NullState
 
 
-class TestFeedbacksFeature(TestCase):
+class TestDenunciationStates(TestCase):
 
     def setUp(self):
         self.null_state = NullState.objects.create()
