@@ -31,7 +31,7 @@ class NullState(DenunciationState):
         raise Exception('Specific notifier')
 
 
-class SolvedState(DenunciationState):
+class EvaluatingState(DenunciationState):
 
     def specific_delete(self):
         pass
@@ -59,6 +59,8 @@ class DoneState(DenunciationState):
 
 
 class Denunciation(models.Model):
+
+    categories = models.ManyToManyField('DenunciationCategory')
 
     justification = models.CharField(max_length=500)
 
@@ -89,3 +91,19 @@ class Denunciation(models.Model):
     def _set_initial_state(self):
         initial_state = self._initial_state.objects.create()
         self.set_state(initial_state)
+
+
+class DenunciationCategory(models.Model):
+
+    name = models.CharField(max_length=100)
+
+    GRAVITY_CHOICES = (
+        ('High', 'H'),
+        ('Medium', 'M'),
+        ('Low', 'L')
+    )
+
+    gravity = models.CharField(
+        max_length=10,
+        choices=GRAVITY_CHOICES,
+    )
