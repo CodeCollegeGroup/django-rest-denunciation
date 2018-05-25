@@ -31,7 +31,8 @@ ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1']
 # Application definition
 
 LOCAL_APPS = [
-    'denunciation'
+    'denunciation',
+    'single_model'
 ]
 
 DJANGO_APPS = [

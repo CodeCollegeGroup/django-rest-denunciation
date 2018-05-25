@@ -1,7 +1,8 @@
 from django.db import models
+from single_model.models import SingleModel
 
 
-class DenunciationState(models.Model):
+class DenunciationState(SingleModel):
 
     denunciation = models.OneToOneField(
         'Denunciation',
@@ -93,7 +94,7 @@ class Denunciation(models.Model):
         self.set_state(initial_state)
 
 
-class DenunciationCategory(models.Model):
+class DenunciationCategory(SingleModel):
 
     name = models.CharField(max_length=100)
 
