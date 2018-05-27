@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import Denunciation, NullState
+from .models import Denunciation, NullState, RelatedAbstractModel
 
 
 class TestDenunciationStates(TestCase):
@@ -47,3 +47,12 @@ class TestDenunciationStates(TestCase):
 
         with self.assertRaisesMessage(Exception, exception_message):
             tested_method()
+
+
+class TestRelatedAbstractModel(TestCase):
+
+    def test_instatiate_abstract_model(self):
+        expected_message = ("Can't save 'RelatedAbstractModel'"
+                            " because it's abstract")
+        with self.assertRaisesMessage(Exception, expected_message):
+            RelatedAbstractModel.objects.create()
