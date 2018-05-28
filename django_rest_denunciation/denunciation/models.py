@@ -1,17 +1,9 @@
 from singleton_model import SingletonModel
+from abstract_related_model.models import AbstractRelatedModel
 from django.db import models
 
 
-class RelatedAbstractModel(models.Model):
-
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        if self.__class__ is RelatedAbstractModel:
-            raise Exception(
-                "Can't save 'RelatedAbstractModel' because it's abstract"
-            )
-
-
-class DenunciationState(SingletonModel, RelatedAbstractModel):
+class DenunciationState(SingletonModel, AbstractRelatedModel):
 
     denunciation = models.OneToOneField(
         'Denunciation',
@@ -103,7 +95,7 @@ class Denunciation(models.Model):
         self.set_state(initial_state)
 
 
-class DenunciationCategory(SingletonModel, RelatedAbstractModel):
+class DenunciationCategory(SingletonModel, AbstractRelatedModel):
 
     name = models.CharField(max_length=100)
 

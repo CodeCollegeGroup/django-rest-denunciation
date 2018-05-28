@@ -44,6 +44,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'abstract_related_model',
     'rest_framework',
     'django_extensions'
 ]
