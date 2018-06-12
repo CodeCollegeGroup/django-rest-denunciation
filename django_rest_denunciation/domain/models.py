@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+# from django.core.mail import EmailMessage
 
 
 class DomainAdministrator(User):
@@ -8,7 +9,20 @@ class DomainAdministrator(User):
         pass
 
     def recover_password(self):
-        pass
+        """Reset password sending in e-mail"""
+
+        random_password = DomainAdministrator.objects.make_random_password()
+        self.set_password(random_password)
+        self.save()
+
+        """
+        message = ""Olá,\nSua senha foi resetada, acesse
+                     a plataforma e troque a senha\n
+                     Sua nova senha é:\n {}"".format(random_password)
+        email = EmailMessage('Password reset',
+                             message, to=[self.email])
+        email.send()
+        """
 
     def retrieve_denunciation_by_priority(self, priority_type=None):
         pass
