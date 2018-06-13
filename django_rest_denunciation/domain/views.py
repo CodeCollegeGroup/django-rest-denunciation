@@ -27,6 +27,11 @@ class DomainViewSet(viewsets.ModelViewSet):
                 uri=data.get('uri'),
                 administrator=admin,
             )
+            message = """Olá, obrigado por registrar um
+                         domínio em nossa plataforma\n
+                         A chave do seu domínio '{}' é\n
+                         Chave: {}""".format(domain.uri, domain.key)
+            admin.send_email('Domínio registrado!', message)
         except ValidationError:
             response = Response(
                 {'detail': 'error during creation of the domain'},
@@ -36,6 +41,11 @@ class DomainViewSet(viewsets.ModelViewSet):
             response = Response(
                 {'detail': 'user not found'},
                 status.HTTP_404_NOT_FOUND
+            )
+        except SMTPException:
+            response = Response(
+                {'detail': 'error while sending email'},
+                status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         return response
 
