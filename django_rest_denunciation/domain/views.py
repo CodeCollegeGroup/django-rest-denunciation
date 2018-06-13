@@ -18,8 +18,8 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
     serializer_class = DomainAdministratorSerializer
     queryset = DomainAdministrator.objects.all()
 
-    @action(methods=['put'], detail=True)
-    def reset_password(self, request, pk=None):
+    @action(methods=['put'], detail=False)
+    def reset_password(self, request):
         """Reset password sending in e-mail"""
 
         response = Response()
@@ -27,7 +27,6 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
         try:
             user = DomainAdministrator.objects.get(
                 email=data.get('email'),
-                pk=pk
             )
             user.recover_password()
         except ObjectDoesNotExist:
@@ -44,6 +43,8 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=False)
     def recover_domain_key(self, request):
+        """Send Domain key to the domain administrator """
+
         response = Response()
         data = request.data
         try:
