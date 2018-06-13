@@ -12,6 +12,33 @@ class DomainViewSet(viewsets.ModelViewSet):
     serializer_class = DomainSerializer
     queryset = Domain.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        """
+        Create a domain generating a key and sending it to the domain admin
+        """
+        response = Response()
+        data = request.data
+        try:
+            admin = DomainAdministrator.objects.get(
+                pk=data.get('administrator')
+            )
+            domain = Domain.objects.create(
+                application_name=data.get('application_name'),
+                uri=data.get('uri'),
+                administrator=admin,
+            )
+        except ValidationError:
+            response = Response(
+                {'detail': 'error during creation of the domain'},
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except ObjectDoesNotExist:
+            response = Response(
+                {'detail': 'user not found'},
+                status.HTTP_404_NOT_FOUND
+            )
+        return response
+
 
 class DomainAdministratorViewSet(viewsets.ModelViewSet):
 
