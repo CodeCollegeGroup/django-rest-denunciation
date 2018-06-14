@@ -1,7 +1,5 @@
-import hashlib
 from smtplib import SMTPException
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -15,8 +13,10 @@ class DomainViewSet(viewsets.ModelViewSet):
     queryset = Domain.objects.all()
 
     def create(self, request, *args, **kwargs):
+        data = self.serializer_class(request.data)
+
         """
-        Create a domain generating a key and sending it to the domain admin
+        Create a domain send it to the domain admin
         """
         response = Response()
         data = request.data
@@ -28,10 +28,6 @@ class DomainViewSet(viewsets.ModelViewSet):
                 application_name=data.get('application_name'),
                 uri=data.get('uri'),
                 administrator=admin,
-                key=self._generate_key(
-                    data.get('application_name'),
-                    data.get('administrator')
-                )
             )
             message = """Olá, obrigado por registrar um
                          domínio em nossa plataforma\n
@@ -54,21 +50,6 @@ class DomainViewSet(viewsets.ModelViewSet):
                 status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         return response
-
-    @staticmethod
-    def _generate_key(application_name, admin_id):
-        microseconds = timezone.now().microsecond % 2
-        key_seed = map(
-            lambda c: str((ord(c)*microseconds)//admin_id + admin_id),
-            list(application_name)
-        )
-
-        key_seed = '@'.join(key_seed)
-
-        hash_obj = hashlib.sha256(key_seed.encode())
-        key = hash_obj.hexdigest()
-
-        return key
 
 
 class DomainAdministratorViewSet(viewsets.ModelViewSet):
