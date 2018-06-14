@@ -22,3 +22,23 @@ class DomainAdministratorFactory(factory.DjangoModelFactory):
     email = factory.LazyAttribute(
         lambda o: '%s@example.org' % o.first_name
     )
+
+
+class DomainFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.Domain
+
+    administrator = factory.SubFactory(DomainAdministratorFactory)
+
+    application_name = factory.Faker(
+        'word'
+    )
+
+    uri = factory.LazyAttribute(
+        lambda o: 'http://www.%s.com.br' % o.application_name
+    )
+
+    key = factory.Faker(
+        'word'
+    )
