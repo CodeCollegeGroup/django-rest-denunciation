@@ -30,9 +30,9 @@ class DomainAdministratorTest(test.TestCase):
 class DomainModelsTests(test.TestCase):
 
     def test_create_domain_with_key(self):
-        self.admin = DomainAdministratorFactory.create()
+        admin = DomainAdministratorFactory.create()
         domain = Domain.objects.create(
-            administrator=self.admin,
+            administrator=admin,
             application_name='website',
             uri='http://mywebsite.com.br'
         )

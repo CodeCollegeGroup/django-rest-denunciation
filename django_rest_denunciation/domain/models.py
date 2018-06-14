@@ -19,9 +19,9 @@ class DomainAdministrator(User):
         self.set_password(random_password)
         self.save()
 
-        message = """Olá,\nSua senha foi resetada, acesse
-                     a plataforma e troque a senha.\n
-                     Sua nova senha é:\n {}""".format(random_password)
+        # message = """Olá,\nSua senha foi resetada, acesse
+        #              a plataforma e troque a senha.\n
+        #              Sua nova senha é:\n {}""".format(random_password)
         # self.send_email('Password Reset', message)
 
     def retrieve_denunciation_by_priority(self, priority_type=None):
@@ -55,7 +55,7 @@ class Domain(models.Model):
     def __str__(self):
         return self.uri
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         self.key = self.generate_key()
         super(Domain, self).save(*args, **kwargs)
 

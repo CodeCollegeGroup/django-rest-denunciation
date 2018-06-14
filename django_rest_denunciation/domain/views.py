@@ -26,14 +26,14 @@ class DomainViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             return Response(serialized_data.errors,
                             status.HTTP_400_BAD_REQUEST)
-            
+
         serialized_data.save()
         # self._send_key_by_email(data.application_name)
 
         return Response({'ok': 'Domain registered!'})
 
-
-    def _send_key_by_email(self, application_name):
+    @staticmethod
+    def _send_key_by_email(application_name):
         domain = Domain.objects.get(application_name=application_name)
 
         message = """Olá, obrigado por registrar um
@@ -41,10 +41,11 @@ class DomainViewSet(viewsets.ModelViewSet):
                      A chave do seu domínio '{}' é\n
                      Chave: {}""".format(domain.uri, domain.key)
 
+        admin = domain.administrator
         admin.send_email('Domínio registrado!', message)
 
-
-    def _get_admin_pk(self, username):
+    @staticmethod
+    def _get_admin_pk(username):
         admin = get_object_or_404(DomainAdministrator, username=username)
         admin_url = reverse(
             'domainadministrator-detail',
