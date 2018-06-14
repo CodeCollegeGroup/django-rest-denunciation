@@ -2,8 +2,7 @@ from rest_framework import serializers
 from denunciation.serializers import DenunciationSerializer
 from .models import Domain, DomainAdministrator
 
-
-class DomainAdministratorSerializer(serializers.ModelSerializer):
+class DomainAdministratorSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = DomainAdministrator
@@ -13,16 +12,8 @@ class DomainAdministratorSerializer(serializers.ModelSerializer):
         ]
 
 
-class DomainSerializer(serializers.ModelSerializer):
-
-    denunciation_set = DenunciationSerializer(many=True)
-    administrator = DomainAdministratorSerializer()
+class DomainSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Domain
-        fields = [
-            'uri',
-            'key',
-            'denunciation_set',
-            'administrator',
-        ]
+        fields = '__all__'
