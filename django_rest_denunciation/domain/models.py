@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.mail import EmailMessage
+# from django.core.mail import EmailMessage
 
 
 class DomainAdministrator(User):
@@ -20,8 +20,10 @@ class DomainAdministrator(User):
         pass
 
     def send_email(self, title, message):
+        """
         email = EmailMessage(title, message, to=[self.email])
         email.send()
+        """
 
 
 class Domain(models.Model):
