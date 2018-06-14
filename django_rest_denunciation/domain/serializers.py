@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Domain, DomainAdministrator
 from denunciation.serializers import DenunciationSerializer
+from .models import Domain, DomainAdministrator
 
 
 class DomainAdministratorSerializer(serializers.ModelSerializer):

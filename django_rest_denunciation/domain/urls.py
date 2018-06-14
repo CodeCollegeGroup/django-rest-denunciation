@@ -10,7 +10,7 @@ ROUTER = routers.DefaultRouter()
 ROUTER.register(r'^domains', DomainViewSet)
 ROUTER.register(r'^admins', DomainAdministratorViewSet)
 
-urlpatterns = ROUTER.urls
+urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 
 urlpatterns += [
     url(r'authenticate/$', obtain_jwt_token),

@@ -19,7 +19,7 @@ before_script:
 
 script:
   - sudo docker-compose run command flake8 --exclude=migrations,manage.py,settings.py,wsgi.py
-  - sudo docker-compose run command pylint $(find -name __init__.py | cut -d '/' -f 2 | sort -u | tr '\n' ' ')
+  - cd django_rest_denunciation/ && sudo docker-compose run command pylint $(find -name __init__.py | cut -d '/' -f 2 | sort -u | tr '\n' ' '); cd ..
   - sudo docker-compose up -d
 
   - sudo docker-compose run command mkdir -p tests_coverage

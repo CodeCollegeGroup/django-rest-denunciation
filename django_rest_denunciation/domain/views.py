@@ -77,7 +77,7 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
     queryset = DomainAdministrator.objects.all()
 
     @action(methods=['put'], detail=False)
-    def reset_password(self, request):
+    def reset_password(self, request):  # pylint: disable=no-self-use
         """Reset password sending in e-mail"""
 
         response = Response()
@@ -100,7 +100,7 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
         return response
 
     @action(methods=['get'], detail=False)
-    def recover_domain_key(self, request):
+    def recover_domain_key(self, request):  # pylint: disable=no-self-use
         """Send Domain key to the domain administrator """
 
         response = Response()
