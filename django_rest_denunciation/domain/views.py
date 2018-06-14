@@ -1,6 +1,8 @@
 from smtplib import SMTPException
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Domain, DomainAdministrator
@@ -13,43 +15,43 @@ class DomainViewSet(viewsets.ModelViewSet):
     queryset = Domain.objects.all()
 
     def create(self, request, *args, **kwargs):
-        data = self.serializer_class(request.data)
+        data = request.data.dict()
+        username = data.pop('username')
+        data['administrator'] = self._get_admin_pk(username)
 
-        """
-        Create a domain send it to the domain admin
-        """
-        response = Response()
-        data = request.data
+        serialized_data = self.serializer_class(data=data)
+
         try:
-            admin = DomainAdministrator.objects.get(
-                pk=data.get('administrator')
-            )
-            domain = Domain.objects.create(
-                application_name=data.get('application_name'),
-                uri=data.get('uri'),
-                administrator=admin,
-            )
-            message = """Olá, obrigado por registrar um
-                         domínio em nossa plataforma\n
-                         A chave do seu domínio '{}' é\n
-                         Chave: {}""".format(domain.uri, domain.key)
-            admin.send_email('Domínio registrado!', message)
-        except ValidationError:
-            response = Response(
-                {'detail': 'error during creation of the domain'},
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        except ObjectDoesNotExist:
-            response = Response(
-                {'detail': 'user not found'},
-                status.HTTP_404_NOT_FOUND
-            )
-        except SMTPException:
-            response = Response(
-                {'detail': 'error while sending email'},
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        return response
+            serialized_data.is_valid(raise_exception=True)
+        except serializers.ValidationError:
+            return Response(serialized_data.errors,
+                            status.HTTP_400_BAD_REQUEST)
+            
+        serialized_data.save()
+        # self._send_key_by_email(data.application_name)
+
+        return Response({'ok': 'Domain registered!'})
+
+
+    def _send_key_by_email(self, application_name):
+        domain = Domain.objects.get(application_name=application_name)
+
+        message = """Olá, obrigado por registrar um
+                     domínio em nossa plataforma\n
+                     A chave do seu domínio '{}' é\n
+                     Chave: {}""".format(domain.uri, domain.key)
+
+        admin.send_email('Domínio registrado!', message)
+
+
+    def _get_admin_pk(self, username):
+        admin = get_object_or_404(DomainAdministrator, username=username)
+        admin_url = reverse(
+            'domainadministrator-detail',
+            kwargs=dict(pk=admin.pk)
+        )
+
+        return admin_url
 
 
 class DomainAdministratorViewSet(viewsets.ModelViewSet):

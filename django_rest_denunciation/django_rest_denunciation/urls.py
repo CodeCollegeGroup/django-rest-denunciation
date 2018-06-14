@@ -20,7 +20,7 @@ from django.conf.urls import include
 urlpatterns = [  # pylint: disable=invalid-name
     path('admin/', admin.site.urls),
     path('api/', include([
-        path('denunciation/', include('denunciation.urls')),
-        path('domain/', include('domain.urls')),
+        path('denunciations/', include('denunciation.urls')),
+        path('domains/', include('domain.urls')),
     ])),
 ]

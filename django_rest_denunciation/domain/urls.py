@@ -7,8 +7,8 @@ from rest_framework_jwt.views import (
 from .views import DomainViewSet, DomainAdministratorViewSet
 
 ROUTER = routers.DefaultRouter()
-ROUTER.register(r'^domains', DomainViewSet)
-ROUTER.register(r'^admins', DomainAdministratorViewSet)
+ROUTER.register(r'domains', DomainViewSet)
+ROUTER.register(r'admins', DomainAdministratorViewSet)
 
 urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 
