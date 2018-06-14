@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 
 
-KEY_LENGTH =  64  # 256 bits in hexadecimal
+KEY_LENGTH = 64  # 256 bits in hexadecimal
 
 
 class DomainAdministrator(User):
@@ -56,20 +56,23 @@ class Domain(models.Model):
         return self.uri
 
     def save(self, *args, **kwargs):
-        self.key = self._generate_key(
+        self.key = self.generate_key()
+        super(Domain, self).save(*args, **kwargs)
+
+    def generate_key(self):
+        return self._generate_key(
             self.application_name,
             self.administrator.id
         )
-        super(Domain, self).save(*args, **kwargs)
 
     @staticmethod
-    def _generate_key(application_name, admin_id):
+    def _generate_key(string, integer):
         microseconds = timezone.now().microsecond
-        local_hash = abs(hash(application_name))
+        local_hash = abs(hash(string))
 
         key_seed = map(
-            lambda c: str((ord(c)*microseconds)//admin_id + local_hash),
-            list(application_name)
+            lambda c: str((ord(c)*microseconds)//integer + local_hash),
+            list(string)
         )
         key_seed = '@'.join(key_seed)
 
