@@ -1,8 +1,14 @@
-from django.test import TestCase
-from .models import Denunciation, NullState, Denunciable
+from django import test
+from rest_framework import status
+from .models import (
+    Denunciation,
+    NullState,
+    Denunciable,
+    DenunciationCategory
+)
 
 
-class TestDenunciationStates(TestCase):
+class TestDenunciationStates(test.TestCase):
 
     def setUp(self):
         self.null_state = NullState.objects.create()
@@ -55,3 +61,34 @@ class TestDenunciationStates(TestCase):
 
         with self.assertRaisesMessage(Exception, exception_message):
             tested_method()
+
+
+class TestDenunciationComplete(test.TestCase):
+
+   def setUp(self):
+        DenunciationCategory.objects.create(name='Racismo', gravity='H')
+        DenunciationCategory.objects.create(name='Plágio', gravity='M')
+
+        self.client = test.Client()
+
+   def test_create(self):
+        response = self.client.post(
+            '/api/denunciations/denunciation-complete/',
+            {'denunciation': {
+                'categories': ['Racismo', 'Plágio'],
+                'justification': 'copiou imagem racista',
+            },
+             'denunciable': {
+                'denunciable_id': 30,
+                'denunciation_type': 'imagem',
+            }}
+        )
+
+        # denunciable = Denunciable.objects.get(denunciable_id=30)
+        # denunciation = Denunciable.objects.last()
+
+        # self.assertTrue(denunciation in denunciable.denunciation_set.all())
+
+        print(response.data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
