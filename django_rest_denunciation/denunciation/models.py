@@ -55,7 +55,7 @@ class DoneState(DenunciationState):
 
 class Denunciable(models.Model):
 
-    denunciable_id = models.IntegerField()
+    denunciable_id = models.IntegerField(primary_key=True)
 
     denunciable_type = models.CharField(max_length=100)
 
@@ -106,9 +106,12 @@ class Denunciation(models.Model):
         super(Denunciation, self).save(*args, **kwargs)
 
 
-class DenunciationCategory(SingletonModel, AbstractRelatedModel):
+class DenunciationCategory(SingletonModel):
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
 
     GRAVITY_CHOICES = (
         ('High', 'H'),
