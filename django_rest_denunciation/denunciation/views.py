@@ -32,3 +32,34 @@ class DenunciationCategoryViewSet(viewsets.ModelViewSet):
 
     serializer_class = DenunciationCategorySerializer
     queryset = DenunciationCategory.objects.all()
+
+
+class DenunciationComplete:
+
+        def validate_data(self, data):
+            denunciation = data.get('denunciation', None)
+            denunciable = data.get('denunciable', None)
+
+            error_response = None
+            if denunciation is None or denunciable is None: 
+                error_message = 'Please, send one key with denunciation and other with denunciable'
+                error_response = {'detail': error_message}
+           
+            serialized_data = DenunciationSerializer(data=denunciation)
+            error_response = (self._validate_serialized_data(serialized_data)
+                              if error_response is None else error_response)
+
+            serialized_data = DenunciableSerializer(data=denunciable)
+            error_response = (self._validate_serialized_data(serialized_data)
+                              if error_response is None else error_response)
+
+            return error_response
+
+        @staticmethod
+        def _validate_serialized_data(serialized_data):
+            try:
+                serialized_data.is_valid(raise_exception=True)
+            except serializers.ValidationError:
+                return serialized_data.errors
+
+            return None
