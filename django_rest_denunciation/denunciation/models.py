@@ -3,14 +3,7 @@ from abstract_related_model.models import AbstractRelatedModel
 from django.db import models
 
 
-class DenunciationState(SingletonModel, AbstractRelatedModel):
-
-    denunciation = models.OneToOneField(
-        'Denunciation',
-        related_name='current_state',
-        on_delete=models.SET_NULL,
-        null=True
-    )
+class DenunciationState(SingletonModel):
 
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
@@ -60,13 +53,33 @@ class DoneState(DenunciationState):
         pass
 
 
+class Denunciable(models.Model):
+
+    denunciable_id = models.IntegerField()
+
+    denunciable_type = models.CharField(max_length=100)
+
+    denunciable_datetime = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('denunciable_id', 'denunciable_type')
+
+
 class Denunciation(models.Model):
+
+    denunciable = models.ForeignKey(
+        'Denunciable',
+        on_delete=models.CASCADE
+    )
+
+    current_state = models.ForeignKey(
+        'DenunciationState',
+        on_delete=models.CASCADE,
+    )
 
     categories = models.ManyToManyField('DenunciationCategory')
 
     justification = models.CharField(max_length=500)
-
-    current_state = DenunciationState
 
     _initial_state = WaitingState
 
@@ -87,12 +100,10 @@ class Denunciation(models.Model):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        super(Denunciation, self).save(*args, **kwargs)
-        self._set_initial_state()
-
-    def _set_initial_state(self):
         initial_state = self._initial_state.objects.create()
-        self.set_state(initial_state)
+        self.current_state = initial_state
+
+        super(Denunciation, self).save(*args, **kwargs)
 
 
 class DenunciationCategory(SingletonModel, AbstractRelatedModel):
