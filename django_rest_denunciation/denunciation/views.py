@@ -63,3 +63,31 @@ class DenunciationComplete:
                 return serialized_data.errors
 
             return None
+
+
+class DenunciationCompleteList(APIView, DenunciationComplete):
+
+    def post(self, request, format=None):
+        data = request.data.dict()
+        errors = self.validate_data(data)
+
+        if not errors:
+            serialized_data_denunciation = DenunciationSerializer(data=denunciation)
+
+            serialized_data_denunciable = DenunciableSerializer(data=denunciable)
+            denunciable = serialized_data_denunciable.save()
+
+            denunciable_url = reverse(
+                'denunciable-detail',
+                kwargs={'pk': denunciable.pk}
+            )
+
+            denunciation['denunciable'] = denunciable_url
+            serialized_data_denunciation.save()
+
+            return Response(
+                {'ok': 'Complete denunciation saved successfully'},
+                status.HTTP_200_OK 
+            )
+
+        return Response({'errors': errors}, status.HTTP_400_BAD_REQUEST)
