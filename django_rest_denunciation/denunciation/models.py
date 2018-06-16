@@ -60,6 +60,18 @@ class DoneState(DenunciationState):
         pass
 
 
+class Denunciable(models.Model):
+
+    denunciable_id = models.IntegerField(default=0)
+
+    denunciable_type = models.CharField(max_length=500, default='')
+
+    denunciable_datetime = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (("denunciable_id", "denunciable_type"),)
+
+
 class Denunciation(models.Model):
 
     categories = models.ManyToManyField('DenunciationCategory')
