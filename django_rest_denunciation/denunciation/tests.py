@@ -64,3 +64,8 @@ class TestDenunciationStates(test.TestCase):
 
         with self.assertRaisesMessage(Exception, exception_message):
             tested_method()
+
+    def test_create(self):
+        response = self.client.post('/api/denunciation/', dumps({"id":1,"justification":"comentário ofencivo","denunciable_id":1,"denunciable_type":"Comment"}) ,content_type='application/json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
