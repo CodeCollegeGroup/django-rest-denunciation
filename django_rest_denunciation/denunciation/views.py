@@ -43,3 +43,35 @@ class DenunciationList(APIView):
             denunciations_dic_list.append(denunciation_dic)
 
         return Response(denunciations_dic_list)
+
+
+        # create
+    def post(self, request, format=None):
+
+        response = Response()
+        data = loads(request.body.decode())
+
+        try:
+            if Denunciable.objects.filter(denunciable_id=data['denunciable_id']).count() == 1:
+
+                denunciable = Denunciable.objects.get(denunciable_id=data['denunciable_id'])
+
+            else:
+
+                denunciable = Denunciable()
+                denunciable.denunciable_id = data['denunciable_id']
+                denunciable.denunciable_type = data['denunciable_type']
+                denunciable.save()
+
+            denunciation = Denunciation()
+            denunciation.justification = data['justification']
+            denunciation.denunciable = denunciable
+            denunciation.save()
+
+            response = Response(status=201)
+
+        except ValidationError:
+
+                response = Response(status=400)
+
+        return response
