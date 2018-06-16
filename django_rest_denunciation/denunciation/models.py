@@ -66,6 +66,13 @@ class Denunciable(models.Model):
         unique_together = (("denunciable_id", "denunciable_type"),)
 
 
+class Denouncer(models.Model):
+
+    email = models.CharField(max_length=100, primary_key=True)
+
+    fake_denunciation = models.IntegerField(default=0)
+
+
 class Denunciation(models.Model):
 
     categories = models.ManyToManyField('DenunciationCategory')
@@ -79,9 +86,13 @@ class Denunciation(models.Model):
     _initial_state = WaitingState
 
     denunciable = models.ForeignKey('Denunciable',
-                    related_name='denunciations',
-                    on_delete=models.CASCADE,
-                    )
+                  related_name='denunciations',
+                  on_delete=models.CASCADE)
+
+    denouncer = models.ForeignKey('Denouncer',
+                related_name='denunciations',
+                on_delete=models.CASCADE,
+                default=0)                
 
     def delete_denunciation(self):
         self.current_state.specific_delete()
