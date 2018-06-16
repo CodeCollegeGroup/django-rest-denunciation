@@ -24,7 +24,7 @@ class UnauthenticateView(APIView):
     @api_view(['GET'])
     @permission_classes((AllowAny,))
     @throttle_classes([AnonRateThrottle,])
-    def get(request):
+    def get(request, denouncer=None):
         content = {
             'status': 'request was permitted'
         }
