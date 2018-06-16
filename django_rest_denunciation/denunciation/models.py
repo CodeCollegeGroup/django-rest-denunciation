@@ -3,14 +3,8 @@ from abstract_related_model.models import AbstractRelatedModel
 from django.db import models
 
 
-class DenunciationState(SingletonModel, AbstractRelatedModel):
+class DenunciationState(SingletonModel):
 
-    denunciation = models.OneToOneField(
-        'Denunciation',
-        related_name='current_state',
-        on_delete=models.SET_NULL,
-        null=True
-    )
 
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
@@ -111,9 +105,10 @@ class Denunciation(models.Model):
 
         super(Denunciation, self).save(*args, **kwargs)
 
-class DenunciationCategory(SingletonModel, AbstractRelatedModel):
 
-    name = models.CharField(max_length=100)
+class DenunciationCategory(models.Model):
+
+    name = models.CharField(max_length=100, unique=True)
 
     GRAVITY_CHOICES = (
         ('High', 'H'),
