@@ -1,12 +1,29 @@
+from json import dumps
 from django.test import TestCase
 from .models import Denunciation, NullState
+from django import test
+from rest_framework import status
+from .models import (
+    Denunciation,
+    NullState,
+    Denunciable,
+    DenunciationCategory
+)
 
 
-class TestDenunciationStates(TestCase):
+class TestDenunciationStates(test.TestCase):
 
     def setUp(self):
         self.null_state = NullState.objects.create()
-        self.denunciation = Denunciation(justification='justification')
+        self.denunciable = Denunciable.objects.create(
+            denunciable_id=1,
+            denunciable_type='type'
+        )
+
+        self.denunciation = Denunciation(
+            justification='justification',
+            denunciable=self.denunciable
+        )
 
     def test_save_denunciation(self):
         self.denunciation.save()
