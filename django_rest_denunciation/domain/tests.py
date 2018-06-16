@@ -1,30 +1,106 @@
 from json import dumps
 from django import test
 from rest_framework import status
-from .factories import DomainAdministratorFactory
-from .models import Domain, KEY_LENGTH
+from .factories import DomainAdministratorFactory, DomainFactory
+from .models import Domain, DomainAdministrator, KEY_LENGTH
 
 
 class DomainAdministratorTest(test.TestCase):
 
     def setUp(self):
         self.admin = DomainAdministratorFactory.create()
+        self.domain = DomainFactory.create(administrator=self.admin)
         self.client_test = test.Client()
 
     def test_reset_password(self):
-        response = self.client_test.put('/api/domains/admins/reset_password/',
-                                        dumps({'email': self.admin.email}),
-                                        'application/json')
+        response = self.client_test.put(
+            '/api/domains/admins/reset_password/',
+            dumps({'email': self.admin.email}),
+            'application/json'
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_reset_password_with_wrong_email(self):
         email = self.admin.email + 'teste'
-        response = self.client_test.put('/api/domains/admins/reset_password/',
-                                        dumps({'email': email}),
-                                        'application/json')
+        response = self.client_test.put(
+            '/api/domains/admins/reset_password/',
+            dumps({'email': email}),
+            'application/json'
+        )
 
-        self.assertEqual(response.data, {'detail': 'user not found'})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_recover_domain_key(self):
+        response = self.client_test.get(
+            '/api/domains/admins/recover_domain_key/',
+            {'application_name': self.domain.application_name},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_recover_domain_key_with_wrong_application_name(self):
+        application_name = self.domain.application_name + 'teste'
+        response = self.client_test.get(
+            '/api/domains/admins/recover_domain_key/',
+            {'application_name': application_name},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_domain_administrator_ok(self):
+        username = 'test_user'
+        email = 'test@foo.com'
+        password = 'test_123'
+        first_name = 'Tester'
+        last_name = 'The Greater'
+
+        response = self.client_test.post(
+            '/api/domains/admins/',
+            dumps({
+                'username': username,
+                'email': email,
+                'password': password,
+                'first_name': first_name,
+                'last_name': last_name
+            }),
+            'application/json'
+        )
+        last_saved = DomainAdministrator.objects.last()
+
+        self.assertEqual(username, last_saved.username)
+        self.assertEqual(first_name, last_saved.first_name)
+        self.assertEqual(last_name, last_saved.last_name)
+        self.assertEqual(email, last_saved.email)
+        self.assertTrue(last_saved.check_password(password))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_domain_administrator_wrong(self):
+        username = ''
+        password = ''
+        email = 'test@foo.com'
+        first_name = 'Tester'
+        last_name = 'The Greater'
+
+        response = self.client_test.post(
+            '/api/domains/admins/',
+            dumps({
+                'username': '',
+                'email': email,
+                'password': '',
+                'first_name': first_name,
+                'last_name': last_name
+            }),
+            'application/json'
+        )
+        last_saved = DomainAdministrator.objects.last()
+
+        self.assertNotEqual(username, last_saved.username)
+        self.assertNotEqual(first_name, last_saved.first_name)
+        self.assertNotEqual(last_name, last_saved.last_name)
+        self.assertNotEqual(email, last_saved.email)
+        self.assertFalse(last_saved.check_password(password))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class DomainModelsTests(test.TestCase):
