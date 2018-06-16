@@ -75,3 +75,38 @@ class DenunciationList(APIView):
                 response = Response(status=400)
 
         return response
+
+
+class DenunciationDetails(APIView):
+
+
+    def get_object(self, pk):
+
+        try:
+            return Denunciation.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            raise Http404
+
+
+    # show
+    def get(self, request, pk, format=None):
+
+        denunciation = self.get_object(pk)
+
+        denunciation_dic = denunciation.__dict__
+
+        denunciable = Denunciable.objects.get(id=denunciation.denunciable.id)
+
+        url = reverse(
+            'denunciation-detail',
+            kwargs={'pk': denunciation.pk}
+        )
+
+        denunciation_dic.update({'denunciable_id' : denunciable.denunciable_id})
+        denunciation_dic.update({'denunciable_type' : denunciable.denunciable_type})
+        denunciation_dic.update({'url' : request.build_absolute_uri(url)})
+
+        del denunciation_dic['id']
+        del denunciation_dic['_state']
+
+        return Response(denunciation_dic)
