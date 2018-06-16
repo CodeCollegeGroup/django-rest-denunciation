@@ -4,7 +4,7 @@ from rest_framework.throttling import (
 import json
 
 
-class DenouncerThrottle(UserRateThrottle):
+class DenouncerRateThrottle(UserRateThrottle):
 
     scope = 'denouncer'
 
@@ -19,6 +19,6 @@ class DenouncerThrottle(UserRateThrottle):
         if 'denouncer' in data:
             denouncer = data['denouncer']
             #TODO check if has many denouncements of denouncer in day
-            return super(DenouncerThrottle, self).allow_request(request, view)
+            return super(DenouncerRateThrottle, self).allow_request(request, view)
         else:
             return False

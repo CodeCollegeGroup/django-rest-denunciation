@@ -16,7 +16,7 @@ from rest_framework.decorators import (
     throttle_classes
 )
 from rest_framework.permissions import AllowAny
-from django_rest_denunciation.throttle import DenouncerThrottle
+from django_rest_denunciation.throttle import DenouncerRateThrottle
 
 
 class UnauthenticateView(APIView):
@@ -52,7 +52,7 @@ class LimitUserView(APIView):
 
     @api_view(['POST'])
     @permission_classes((AllowAny,))
-    @throttle_classes([DenouncerThrottle,])
+    @throttle_classes([DenouncerRateThrottle,])
     def get(request):
 
         content = {
