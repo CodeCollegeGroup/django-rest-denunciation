@@ -3,7 +3,7 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from denunciation.models import Denunciation, Denunciable
+from denunciation.models import Denunciation, Denunciable, Denouncer
 from json import dumps, loads
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
@@ -20,32 +20,32 @@ class DenunciationList(APIView):
 
         denunciations = Denunciation.objects.all()
 
-        denunciations_dic_list = []
+        denunciations_dict_list = []
 
         for denunciation in denunciations:
 
             denunciable = Denunciable.objects.get(id=denunciation.denunciable.id)
 
-            denunciation_dic = denunciation.__dict__
+            denunciation_dict = denunciation.__dict__
 
             url = reverse(
                 'denunciation-detail',
                 kwargs={'pk': denunciation.pk}
             )
 
-            denunciation_dic.update({'denunciable_id' : denunciable.denunciable_id})
-            denunciation_dic.update({'denunciable_type' : denunciable.denunciable_type})
-            denunciation_dic.update({'url' : request.build_absolute_uri(url)})
+            denunciation_dict.update({'denunciable_id' : denunciable.denunciable_id})
+            denunciation_dict.update({'denunciable_type' : denunciable.denunciable_type})
+            denunciation_dict.update({'url' : request.build_absolute_uri(url)})
+            
+            del denunciation_dict['id']
+            del denunciation_dict['_state']
 
-            del denunciation_dic['id']
-            del denunciation_dic['_state']
+            denunciations_dict_list.append(denunciation_dict)
 
-            denunciations_dic_list.append(denunciation_dic)
-
-        return Response(denunciations_dic_list)
+        return Response(denunciations_dict_list)
 
 
-        # create
+    # create
     def post(self, request, format=None):
 
         response = Response()
@@ -112,7 +112,7 @@ class DenunciationDetails(APIView):
         return Response(denunciation_dic)
 
 
-     # update
+    # update
     def put(self, request, pk, format=None):
 
         denunciation = self.get_object(pk)

@@ -66,6 +66,34 @@ class TestDenunciationStates(test.TestCase):
             tested_method()
 
     def test_create(self):
-        response = self.client.post('/api/denunciation/', dumps({"id":1,"justification":"comentário ofencivo","denunciable_id":1,"denunciable_type":"Comment"}) ,content_type='application/json')
+        response = self.client.post('/api/denunciation/', dumps({"id":1,"justification":"comentário ofensivo","denunciable_id":1,"denunciable_type":"Comment"}) ,content_type='application/json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+class TestDenunciation(test.TestCase):
+
+    def test_index(self):
+        response = self.client.post('/api/denunciation/', dumps({"id":1,"justification":"comentário ofensivo","denunciable_id":1,"denunciable_type":"Comment"}) ,content_type='application/json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.post('/api/denunciation/', dumps({"id":2,"justification":"comentário preconceituoso","denunciable_id":2,"denunciable_type":"Comment"}) ,content_type='application/json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get('/api/denunciation/', follow=True)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Denunciation.objects.count(), 2)
+
+    def test_delete(self):
+        '''
+        response = self.client.post('/api/denunciation/', dumps({"id":1,"justification":"comentário ofensivo","denunciable_id":1,"denunciable_type":"Comment"}) ,content_type='application/json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.delete('/api/denunciation/1', follow=False)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Denunciation.objects.count(), 0)
+        '''
