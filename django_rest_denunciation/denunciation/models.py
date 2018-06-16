@@ -76,11 +76,18 @@ class Denunciation(models.Model):
 
     categories = models.ManyToManyField('DenunciationCategory')
 
-    justification = models.CharField(max_length=500)
+    justification = models.CharField(max_length=500, default='')
 
-    current_state = DenunciationState
+    current_state = models.ForeignKey('DenunciationState',
+                    related_name='denunciations',
+                    on_delete=models.CASCADE)
 
     _initial_state = WaitingState
+
+    denunciable = models.ForeignKey('Denunciable',
+                    related_name='denunciations',
+                    on_delete=models.CASCADE,
+                    )
 
     def delete_denunciation(self):
         self.current_state.specific_delete()
@@ -99,13 +106,10 @@ class Denunciation(models.Model):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        super(Denunciation, self).save(*args, **kwargs)
-        self._set_initial_state()
-
-    def _set_initial_state(self):
         initial_state = self._initial_state.objects.create()
-        self.set_state(initial_state)
+        self.current_state = initial_state
 
+        super(Denunciation, self).save(*args, **kwargs)
 
 class DenunciationCategory(SingletonModel, AbstractRelatedModel):
 
