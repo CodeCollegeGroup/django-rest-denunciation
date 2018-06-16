@@ -1,7 +1,6 @@
 from smtplib import SMTPException
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -64,33 +63,28 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
     def reset_password(self, request):  # pylint: disable=no-self-use
         """Reset password sending in e-mail"""
 
-        response = Response()
         data = request.data
         try:
-            user = DomainAdministrator.objects.get(
+            user = get_object_or_404(
+                DomainAdministrator,
                 email=data.get('email'),
             )
             user.recover_password()
-        except ObjectDoesNotExist:
-            response = Response(
-                {'detail': 'user not found'},
-                status.HTTP_404_NOT_FOUND
-            )
         except SMTPException:
-            response = Response(
+            return Response(
                 {'detail': 'error while sending email'},
                 status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        return response
+        return Response({'ok': 'password reseted'}, status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False)
     def recover_domain_key(self, request):  # pylint: disable=no-self-use
-        """Send Domain key to the domain administrator """
+        """Send Domain key to the domain administrator"""
 
-        response = Response()
-        data = request.data
+        data = request.query_params.copy()
         try:
-            domain = Domain.objects.get(
+            domain = get_object_or_404(
+                Domain,
                 application_name=data.get('application_name')
             )
             admin = domain.administrator
@@ -100,20 +94,14 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
                 'Equipe Django Rest Denunciation',
                 message
             )
-        except ObjectDoesNotExist:
-            response = Response(
-                {'detail': 'domain not found'},
-                status.HTTP_404_NOT_FOUND
-            )
         except SMTPException:
-            response = Response(
+            return Response(
                 {'detail': 'error while sending email'},
                 status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        return response
+        return Response({'ok': 'domain key recovered'}, status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        response = Response()
         data = request.data
         serialized_data = self.serializer_class(data=data)
 
@@ -123,10 +111,11 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
             return Response(serialized_data.errors,
                             status.HTTP_400_BAD_REQUEST)
 
-        DomainAdministrator.objects.create_user(
-            username=data.get('username'),
-            email=data.get('email', ''),
-            password=data.get('password'),
+        admin = DomainAdministrator.objects.create_user(
+            username=data.pop('username'),
+            password=data.pop('password'),
         )
+        serialized_data.update(validated_data=data, instance=admin)
 
-        return response
+        return Response({'ok': 'administrator registered'},
+                        status.HTTP_200_OK)
