@@ -1,7 +1,7 @@
 from smtplib import SMTPException
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -115,11 +115,18 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         response = Response()
         data = request.data
+        serialized_data = self.serializer_class(data=data)
+
         try:
-            DomainAdministrator.objects.create_user(
-                username=data.get('username'),
-                password=data.get('password')
-            )
-        except ValidationError:
-            response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            serialized_data.is_valid(raise_exception=True)
+        except serializers.ValidationError:
+            return Response(serialized_data.errors,
+                            status.HTTP_400_BAD_REQUEST)
+
+        DomainAdministrator.objects.create_user(
+            username=data.get('username'),
+            email=data.get('email', ''),
+            password=data.get('password'),
+        )
+
         return response
