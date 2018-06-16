@@ -1,10 +1,8 @@
 from singleton_model import SingletonModel
-from abstract_related_model.models import AbstractRelatedModel
 from django.db import models
 
 
 class DenunciationState(SingletonModel):
-
 
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
@@ -18,8 +16,8 @@ class DenunciationState(SingletonModel):
 
 
 class NullState(DenunciationState):
-    # Exceptions to detect if void methods are being called
 
+    # Exceptions to detect if void methods are being called
     def specific_delete(self):
         raise Exception('Specific deletion')
 
@@ -79,20 +77,26 @@ class Denunciation(models.Model):
 
     justification = models.CharField(max_length=500, default='')
 
-    current_state = models.ForeignKey('DenunciationState',
-                    related_name='denunciations',
-                    on_delete=models.CASCADE)
+    current_state = models.ForeignKey(
+        'DenunciationState',
+        related_name='denunciations',
+        on_delete=models.CASCADE
+    )
 
     _initial_state = WaitingState
 
-    denunciable = models.ForeignKey('Denunciable',
-                  related_name='denunciations',
-                  on_delete=models.CASCADE)
+    denunciable = models.ForeignKey(
+        'Denunciable',
+        related_name='denunciations',
+        on_delete=models.CASCADE
+    )
 
-    denouncer = models.ForeignKey('Denouncer',
-                related_name='denunciations',
-                on_delete=models.CASCADE,
-                default=0)                
+    denouncer = models.ForeignKey(
+        'Denouncer',
+        related_name='denunciations',
+        on_delete=models.CASCADE,
+        default=0
+    )
 
     def delete_denunciation(self):
         self.current_state.specific_delete()
