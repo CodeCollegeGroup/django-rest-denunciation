@@ -110,3 +110,29 @@ class DenunciationDetails(APIView):
         del denunciation_dic['_state']
 
         return Response(denunciation_dic)
+
+
+     # update
+    def put(self, request, pk, format=None):
+
+        denunciation = self.get_object(pk)
+        denunciable = Denunciable.objects.get(id=denunciation.denunciable.id)
+        response = Response()
+        data = loads(request.body.decode())
+
+        try:
+
+            denunciation.justification = data['justification']
+            denunciation.save()
+
+            denunciable.denunciable_id = data['denunciable_id']
+            denunciable.denunciable_type = data['denunciable_type']
+            denunciable.save()
+
+            response = Response(status=200)
+
+        except ValidationError:
+
+                response = Response(status=400)
+
+        return response
