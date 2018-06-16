@@ -10,5 +10,5 @@ from denunciation.views import (
 urlpatterns = [
     url(r'^unauthenticate/', UnauthenticateView.get),
     url(r'^authenticate/', AuthenticateView.get),
-    url(r'^limit_user/(?P<denouncer>[a-z]+)/$', LimitUserView.get),
+    url(r'^limit_user/', LimitUserView.get),
 ]

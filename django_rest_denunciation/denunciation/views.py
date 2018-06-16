@@ -50,14 +50,15 @@ class AuthenticateView(APIView):
 
 class LimitUserView(APIView):
 
-    @api_view(['GET'])
+    @api_view(['POST'])
     @permission_classes((AllowAny,))
     @throttle_classes([DenouncerThrottle,])
-    def get(request, denouncer=None):
+    def get(request):
+
         content = {
             'status': 'request was permitted',
-            'denouncer': denouncer
         }
+
         return response.Response(
             content,
             status=status.HTTP_200_OK
