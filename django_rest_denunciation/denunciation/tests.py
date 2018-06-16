@@ -1,3 +1,4 @@
+from json import dumps
 from django import test
 from rest_framework import status
 from .models import (
@@ -74,21 +75,20 @@ class TestDenunciationComplete(test.TestCase):
    def test_create(self):
         response = self.client.post(
             '/api/denunciations/denunciation-complete/',
-            {'denunciation': {
-                'categories': ['Racismo', 'Plágio'],
-                'justification': 'copiou imagem racista',
-            },
-             'denunciable': {
-                'denunciable_id': 30,
-                'denunciation_type': 'imagem',
-            }}
+            dumps({"denunciable": {
+                       "denunciable_id": 30,
+                       "denunciable_type": "imagem"
+                  },
+                   "denunciation": {
+                       "categories": ["Racismo", "Plágio"],
+                       "justification": "copiou imagem racista"
+                  },
+            }),
+            content_type='application/json'
         )
 
-        # denunciable = Denunciable.objects.get(denunciable_id=30)
-        # denunciation = Denunciable.objects.last()
+        denunciation = Denunciation.objects.last()
+        denunciable = Denunciable.objects.last()
 
-        # self.assertTrue(denunciation in denunciable.denunciation_set.all())
-
-        print(response.data)
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(denunciation.denunciable, denunciable)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)

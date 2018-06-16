@@ -55,7 +55,7 @@ class DoneState(DenunciationState):
 
 class Denunciable(models.Model):
 
-    denunciable_id = models.IntegerField(primary_key=True)
+    denunciable_id = models.IntegerField()
 
     denunciable_type = models.CharField(max_length=100)
 
@@ -106,7 +106,7 @@ class Denunciation(models.Model):
         super(Denunciation, self).save(*args, **kwargs)
 
 
-class DenunciationCategory(SingletonModel):
+class DenunciationCategory(models.Model):
 
     name = models.CharField(
         max_length=100,

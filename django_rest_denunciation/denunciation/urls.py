@@ -16,5 +16,5 @@ urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 
 urlpatterns += [
     url(r'denunciation-complete', DenunciationCompleteList.as_view()),
-    # url(r'denunciation/(?P<pk>[0-9]+)/$', DenunciationDetails.as_view()),
+    #url(r'denunciation-complete/(?P<pk>[0-9]+)/$',DenunciationDetails.as_view(), name=),
 ]
