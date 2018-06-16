@@ -136,3 +136,12 @@ class DenunciationDetails(APIView):
                 response = Response(status=400)
 
         return response
+
+
+    # delete
+    def delete(self, request, pk, format=None):
+
+        denunciation = self.get_object(pk)
+        denunciation.delete()
+
+        return Response(status=204)
