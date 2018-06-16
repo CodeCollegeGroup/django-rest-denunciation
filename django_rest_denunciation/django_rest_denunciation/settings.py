@@ -46,7 +46,8 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'abstract_related_model',
     'rest_framework',
-    'django_extensions'
+    'django_extensions',
+    'rest_framework.authtoken'
 ]
 
 INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS + THIRD_PARTY_APPS
@@ -114,12 +115,20 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': (
         'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
+        'rest_framework.throttling.UserRateThrottle',
+        # 'django_rest_denunciation.throttle.DenouncerThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
-        'user': '1000/day'
-    }
+        'user': '1000/day',
+        'denouncer': '100/day'
+    },
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
 
 
