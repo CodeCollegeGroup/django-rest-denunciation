@@ -322,55 +322,11 @@ class DenunciationDetails(APIView):
     def get(self, request, pk, format=None):
 
         denunciation = self.get_object(pk)
-
-        denunciation_dic = denunciation.__dict__
-
-        denunciable = Denunciable.objects.get(id=denunciation.denunciable.id)
-
-        url = reverse(
-            'denunciation-detail',
-            kwargs={'pk': denunciation.pk}
+        d_dict = DenunciationList.dict_denunciation_maker(
+            denunciation, request
         )
 
-        denunciation_dic.update(
-            {'denunciable_id': denunciable.denunciable_id}
-        )
-        denunciation_dic.update(
-            {'denunciable_type': denunciable.denunciable_type}
-        )
-        denunciation_dic.update(
-            {'url': request.build_absolute_uri(url)}
-        )
-
-        del denunciation_dic['id']
-        del denunciation_dic['_state']
-
-        return Response(denunciation_dic)
-
-    # update
-    def put(self, request, pk, format=None):
-
-        denunciation = self.get_object(pk)
-        denunciable = Denunciable.objects.get(id=denunciation.denunciable.id)
-        response = Response()
-        data = loads(request.body.decode())
-
-        try:
-
-            denunciation.justification = data['justification']
-            denunciation.save()
-
-            denunciable.denunciable_id = data['denunciable_id']
-            denunciable.denunciable_type = data['denunciable_type']
-            denunciable.save()
-
-            response = Response(status=200)
-
-        except ValidationError:
-
-                response = Response(status=400)
-
-        return response
+        return Response(d_dict)
 
     # delete
     def delete(self, request, pk, format=None):
