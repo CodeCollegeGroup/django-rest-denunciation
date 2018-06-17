@@ -1,10 +1,10 @@
 from json import dumps
+from .models import Denunciation, NullState, WaitingState
 from django import test
 from rest_framework import status
 from .models import (
-    Denunciation,
-    NullState,
-    Denunciable
+    Denunciable,
+    DenunciationCategory
 )
 
 
@@ -21,6 +21,9 @@ class TestDenunciationStates(test.TestCase):
             justification='justification',
             denunciable=self.denunciable
         )
+
+        state = WaitingState.objects.create()
+        self.denunciation.current_state = state
 
     def test_save_denunciation(self):
         self.denunciation.save()
