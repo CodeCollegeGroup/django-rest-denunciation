@@ -153,12 +153,28 @@ class TestDenunciation(test.TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_3(self):
+        response = self.response_post(self.json3)
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        response = self.client.get('/api/denunciation/', follow=True)
+    def test_create_4(self):
 
+        response = self.response_post(self.json1)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get('/api/denunciation/1/null/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Denunciation.objects.count(), 2)
+
+        denunciation = Denunciation.objects.get(pk=1)
+        self.assertEqual(denunciation.current_state.name, 'NullState')
+
+        response = self.client.get('/api/denunciation/1/waiting/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_5(self):
+        response = self.response_post(self.json4)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_delete(self):
         response = self.response_post(self.json1)
