@@ -3,7 +3,6 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 from django_rest_denunciation.throttle import DenouncerRateThrottle
 from .models import (
     Denunciation,
@@ -14,15 +13,6 @@ from .serializers import (
     DenunciationSerializer,
     DenunciableSerializer,
     DenunciationCategorySerializer
-)
-from rest_framework.throttling import (
-    AnonRateThrottle,
-    UserRateThrottle,
-)
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    throttle_classes
 )
 
 
