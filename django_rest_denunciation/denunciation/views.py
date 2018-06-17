@@ -241,15 +241,15 @@ class DenunciationList(APIView):
         return denunciable
 
     def verify_denouncer(self, data):
-        denouncer = self.getDenouncer(data['denunciation']['email'])
+        denouncer = self.getDenouncer(data['denunciation']['denouncer'])
         if denouncer is None:
             denouncer_serializer = DenouncerSerializer(
-                data={'email': data['denunciation']['email']}
+                data={'email': data['denunciation']['denouncer']}
             )
             if denouncer_serializer.is_valid():
                 denouncer_serializer.save()
                 denouncer = Denouncer.objects.get(
-                    email=data['denunciation']['email']
+                    email=data['denunciation']['denouncer']
                 )
             else:
                 return None
@@ -277,7 +277,7 @@ class DenunciationList(APIView):
         denunciation.current_state = WaitingState.objects.create()
         denunciation.justification = data['denunciation']['justification']
         denunciation.denunciable = denunciable
-        if 'email' in data['denunciation']:
+        if 'denouncer' in data['denunciation']:
             denunciation.denouncer = denouncer
         denunciation.save()
 
@@ -293,7 +293,7 @@ class DenunciationList(APIView):
         if denunciable is None:
             return Response(status=400)
 
-        if 'email' in data['denunciation']:
+        if 'denouncer' in data['denunciation']:
             denouncer = self.verify_denouncer(data)
             if denouncer is None:
                 return Response(status=400)

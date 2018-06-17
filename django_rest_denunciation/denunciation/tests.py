@@ -108,7 +108,7 @@ class TestDenunciation(test.TestCase):
         "denunciation": {
             "categories": ["Racismo", "Plágio"],
             "justification": "copiou imagem racista",
-            "email": "joao@unb.br"
+            "denouncer": "joao@unb.br"
         }
     }
 
