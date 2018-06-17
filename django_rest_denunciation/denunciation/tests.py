@@ -1,5 +1,6 @@
 from json import dumps
 from django import test
+from django.urls import reverse
 from rest_framework import status
 from .models import (
     Denunciation,
@@ -30,18 +31,14 @@ class TestDenunciationStates(test.TestCase):
         self.denunciation.save()
         self.denunciation.set_state(self.null_state)
 
-        self.assertTrue(
-            isinstance(self.denunciation.current_state, NullState)
-        )
+        self.assertTrue(isinstance(self.denunciation.current_state, NullState))
 
     def test_save(self):
         self.denunciation.save()
 
         # pylint: disable=protected-access
-        self.assertTrue(
-            isinstance(self.denunciation.current_state,
-                       self.denunciation._initial_state)
-        )
+        self.assertTrue(isinstance(self.denunciation.current_state,
+                        self.denunciation._initial_state))
         # pylint: disable=protected-access
 
     def test_delete_denunciation(self):
@@ -92,3 +89,36 @@ class TestDenunciationComplete(test.TestCase):
 
         self.assertEqual(denunciation.denunciable, denunciable)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class TestDenunciationCategory(test.TestCase):
+
+    def setUp(self):
+        self.category = DenunciationCategory.objects.create(name='Racismo',
+                                                            gravity=2)
+        self.client = test.Client()
+
+    def test_get_gravity_representation(self):
+        category_url = reverse('denunciationcategory-detail',
+                               kwargs={'pk': self.category.pk})
+
+        response = self.client.get(category_url)
+
+        gravity_representation = 'High'
+        saved_gravity = response.data['gravity']
+        self.assertEqual(saved_gravity, gravity_representation)
+
+    def test_post_gravity_gravity_representation(self):
+        data = {'name': 'Plágio',
+                'gravity': 'Medium'}
+
+        response = self.client.post(
+            '/api/denunciations/denunciation-category/',
+            dumps(data),
+            content_type='application/json'
+        )
+
+        saved_gravity = DenunciationCategory.objects.last().gravity
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(saved_gravity, '1')

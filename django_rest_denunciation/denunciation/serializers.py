@@ -1,4 +1,5 @@
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError
 from .models import (
     Denunciation,
     Denunciable,
@@ -23,6 +24,21 @@ class DenunciationSerializer(serializers.HyperlinkedModelSerializer):
 
 class DenunciationCategorySerializer(serializers.HyperlinkedModelSerializer):
 
+    gravity_map = {
+        '2': 'High',
+        '1': 'Medium',
+        '0': 'Low'
+    }
+
     class Meta:
         model = DenunciationCategory
         fields = '__all__'
+
+    def to_representation(self, instance):
+        field_view = super().to_representation(instance)
+        gravity = field_view['gravity']
+
+        if gravity in ('0', '1', '2'):
+            field_view['gravity'] = self.gravity_map[gravity]
+
+        return field_view
