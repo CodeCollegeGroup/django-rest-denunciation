@@ -69,20 +69,57 @@ class TestDenunciationStates(test.TestCase):
 class TestDenunciation(test.TestCase):
 
     json1 = {
-        "id": 1,
-        "justification": "comentário ofensivo",
-        "denunciable_id": 1,
-        "denouncer_id": "daniel@unb.br",
-        "denunciable_type": "Comment"
+        "denunciable": {
+            "denunciable_id": 30,
+            "denunciable_type": "imagem"
+        },
+        "denunciation": {
+            "categories": ["Racismo", "Plágio"],
+            "justification": "copiou imagem racista"
+        }
     }
 
     json2 = {
-        "id": 2,
-        "justification": "comentário preconceituoso",
-        "denunciable_id": 2,
-        "denouncer_id": "mateus@unb.br",
-        "denunciable_type": "Comment"
+        "denunciable": {
+            "denunciable_id": 30,
+            "denunciable_type": "imagem"
+        },
+        "denunciation": {
+            "categories": ["oi", "oi2"],
+            "justification": "copiou imagem racista"
+        }
     }
+
+    json3 = {
+        "denunciable": {
+            "denunciable_id": 30,
+            "denunciable_type": "imagem"
+        },
+        "denunciation": {
+            "justification": "copiou imagem racista"
+        }
+    }
+
+    json4 = {
+        "denunciable": {
+            "denunciable_id": 50,
+            "denunciable_type": "imagem"
+        },
+        "denunciation": {
+            "categories": ["Racismo", "Plágio"],
+            "justification": "copiou imagem racista",
+            "email": "joao@unb.br"
+        }
+    }
+
+    json5 = {
+        "evaluation": 'adfafdd',
+        "fake": True
+    }
+
+    def setUp(self):
+        DenunciationCategory.objects.create(name='Racismo', gravity='H')
+        DenunciationCategory.objects.create(name='Plágio', gravity='M')
 
     def response_post(self, json):
         response = self.client.post(
