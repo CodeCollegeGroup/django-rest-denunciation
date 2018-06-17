@@ -1,6 +1,7 @@
 from singleton_model import SingletonModel
 from abstract_related_model.models import AbstractRelatedModel
 from django.db import models
+from domain.models import Domain
 
 
 class DenunciationState(SingletonModel, AbstractRelatedModel):
@@ -63,6 +64,8 @@ class DoneState(DenunciationState):
 class Denunciation(models.Model):
 
     categories = models.ManyToManyField('DenunciationCategory')
+
+    domain = models.ForeignKey(Domain, on_delete=models.SET_NULL, null=True)
 
     justification = models.CharField(max_length=500)
 

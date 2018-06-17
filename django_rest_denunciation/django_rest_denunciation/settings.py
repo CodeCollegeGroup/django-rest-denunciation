@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1']
 
 LOCAL_APPS = [
     'denunciation',
+    'domain',
 ]
 
 DJANGO_APPS = [
@@ -117,13 +118,20 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
 USE_L10N = True
 
 USE_TZ = True
+
+
+# Email configuration
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 
 # Static files (CSS, JavaScript, Images)
