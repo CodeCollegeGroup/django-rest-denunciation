@@ -1,9 +1,6 @@
-from json import loads
 from django.urls import reverse
 from rest_framework import viewsets, status
-from rest_framework import serializers
-from rest_framework.decorators import parser_classes
-from rest_framework.parsers import JSONParser
+from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import (
@@ -14,8 +11,7 @@ from .models import (
 from .serializers import (
     DenunciationSerializer,
     DenunciableSerializer,
-    DenunciationCategorySerializer,
-    DenunciationCompleteSerializer
+    DenunciationCategorySerializer
 )
 
 
@@ -40,53 +36,50 @@ class DenunciationCategoryViewSet(viewsets.ModelViewSet):
 class DenunciationCompleteList(APIView):
 
     def post(self, request, format=None):
-        try:
-            data = request.data.copy()
-            denunciable = data['denunciable']
-            denunciation = data['denunciation']
-        except:
-            message = "Your dict must have 'denunciation' and 'denunciable'"
-            return Response({'errors': message}, status.HTTP_400_BAD_REQUEST) 
+        denunciable, denunciation = self._get_splitted_data(request)
+        saved_denunciable = self._save_denunciable(denunciable, request)
 
-        try:
-            denunciable_serialized = DenunciableSerializer(
-                data=denunciable,
-                context={'request': request}
-            )
-            denunciable_serialized.is_valid(raise_exception=True)
-            saved_denunciable = denunciable_serialized.save()
-        except serializers.ValidationError:
-            return Response(
-                {'denunciable': denunciable_serialized.errors},
-                status.HTTP_400_BAD_REQUEST
-            )
+        categories_data = denunciation['categories']
+        categories_urls = self._get_categories_urls(categories_data, request)
 
-        categories_urls = self._get_categories_urls(
-            denunciation['categories'],
-            request
-        )
+        denunciable_url = self._get_denunciable_url(saved_denunciable, request)
+
         denunciation['categories'] = categories_urls
+        denunciation['denunciable'] = denunciable_url
 
-        try:
-            denunciation_serialized = DenunciationSerializer(
-                data=denunciation, context={'request': request}
-            )
-
-            kwargs = {'pk': saved_denunciable.pk}
-            denunciable_url = reverse('denunciable-detail', kwargs=kwargs)
-            denunciable_url = request.build_absolute_uri(denunciable_url)
-            denunciation['denunciable'] = denunciable_url
-
-            denunciation_serialized.is_valid(raise_exception=True)
-            denunciable_serialized.save()
-        except serializers.ValidationError:
-            return Response(
-                {'denunciation': denunciation_serialized.errors},
-                status.HTTP_400_BAD_REQUEST
-            )
+        self._save_denunciation(denunciation, request)
 
         ok_status = {'ok': 'Complete denunciation saved successfully'}
         return Response(ok_status, status.HTTP_201_CREATED)
+
+    @staticmethod
+    def _save_denunciation(denunciation_data, request):
+        denunciation_serialized = DenunciationSerializer(
+            data=denunciation_data, context={'request': request}
+        )
+
+        denunciation_serialized.is_valid(raise_exception=True)
+        saved_denunciation = denunciation_serialized.save()
+
+        return saved_denunciation
+
+    @staticmethod
+    def _save_denunciable(denunciable_data, request):
+        denunciable_serialized = DenunciableSerializer(
+            data=denunciable_data, context={'request': request}
+        )
+        denunciable_serialized.is_valid(raise_exception=True)
+        saved_denunciable = denunciable_serialized.save()
+
+        return saved_denunciable
+
+    @staticmethod
+    def _get_denunciable_url(denunciable, request):
+        kwargs = {'pk': denunciable.pk}
+        denunciable_url = reverse('denunciable-detail', kwargs=kwargs)
+        denunciable_url = request.build_absolute_uri(denunciable_url)
+
+        return denunciable_url
 
     @staticmethod
     def _get_categories_urls(categories, request):
@@ -98,4 +91,19 @@ class DenunciationCompleteList(APIView):
 
             return categorie_url
 
-        return [get_categorie_url(category) for category in categories] 
+        return [get_categorie_url(category) for category in categories]
+
+    @staticmethod
+    def _get_splitted_data(request):
+        data = request.data.copy()
+
+        try:
+            denunciable = data['denunciable']
+            denunciation = data['denunciation']
+        except KeyError:
+            raise ValidationError(
+                "Sent dict must have 'denunciation' and 'denunciable' keys",
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        return denunciable, denunciation
