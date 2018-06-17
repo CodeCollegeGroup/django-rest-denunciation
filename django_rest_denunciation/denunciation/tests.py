@@ -106,16 +106,20 @@ class TestDenunciationQueue(test.TestCase):
         self.client = test.Client()
 
     def test_get_queue(self):
-        response = self.client.get(
-            '/api/denunciations/denunciation-queue/',
-            {
-                'start': '2018-06-17',
-                'end': '2018-06-17',
-                'queries': ['gravity'],
-            }
-        )
+        response = self.client.get('/api/denunciations/denunciation-queue/')
+
+        denunciation_url = reverse('denunciation-detail',
+                                   kwargs={'pk': self.denunciation.pk})
+
+        path = reverse('denunciation-detail',
+                       kwargs={'pk': self.denunciation.pk})
+        denunciation_url = 'http://testserver' + path
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, 
+            ("{{'denunciation_queue': ['{}']}}").format(denunciation_url)
+        )
 
 
 class TestDenunciationCategory(test.TestCase):
