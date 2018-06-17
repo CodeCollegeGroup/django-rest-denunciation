@@ -18,7 +18,6 @@ class DenouncerRateThrottle(UserRateThrottle):
 
         self.key = self.get_cache_key(request, view)
         self.history = self.cache.get(self.key, [])
-        self.now = self.timer()
 
         data = json.loads(request.body.decode('utf-8'))
 
@@ -39,9 +38,6 @@ class DenouncerRateThrottle(UserRateThrottle):
                 denunciable__denunciable_datetime__range=(start_day, end_day)
             )
 
-            if denunciations.count() < self.num_requests:
-                return True
-            else:
-                return False
+            return denunciations.count() < self.num_requests
         else:
             return False
