@@ -88,7 +88,7 @@ class Denunciable(models.Model):
 
 class Denouncer(models.Model):
 
-    email = models.CharField(max_length=100, primary_key=True)
+    email = models.CharField(max_length=100, unique=True)
 
     fake_denunciation = models.IntegerField(default=0)
 
@@ -117,8 +117,12 @@ class Denunciation(models.Model):
         'Denouncer',
         related_name='denunciations',
         on_delete=models.CASCADE,
-        default=0
+        null=True
     )
+
+    evaluate = models.CharField(max_length=500, default='')
+
+    fake = models.BooleanField(default=False)
 
     def delete_denunciation(self):
         self.current_state.specific_delete()
@@ -137,9 +141,6 @@ class Denunciation(models.Model):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        initial_state = self._initial_state.objects.create()
-        self.current_state = initial_state
-
         super(Denunciation, self).save(*args, **kwargs)
 
 
