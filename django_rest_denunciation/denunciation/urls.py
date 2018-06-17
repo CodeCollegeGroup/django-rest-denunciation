@@ -1,14 +1,19 @@
 from django.conf.urls import url
-from django.contrib import admin
 from rest_framework import routers
-from denunciation.views import (
-    AuthenticateView,
-    UnauthenticateView,
-    LimitUserView,
+from .views import (
+    DenunciationViewSet,
+    DenunciableViewSet,
+    DenunciationCategoryViewSet,
+    DenunciationCompleteList
 )
 
-urlpatterns = [
-    url(r'^unauthenticate/', UnauthenticateView.get),
-    url(r'^authenticate/', AuthenticateView.get),
-    url(r'^limit_user/', LimitUserView.get),
+ROUTER = routers.DefaultRouter()
+ROUTER.register(r'denunciation', DenunciationViewSet)
+ROUTER.register(r'denunciable', DenunciableViewSet)
+ROUTER.register(r'denunciation-category', DenunciationCategoryViewSet)
+
+urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
+
+urlpatterns += [
+    url(r'denunciation-complete', DenunciationCompleteList.as_view()),
 ]

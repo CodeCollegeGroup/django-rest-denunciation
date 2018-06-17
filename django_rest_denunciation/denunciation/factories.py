@@ -31,7 +31,7 @@ class NullStateFactory(DenunciationStateFactory):
 class SolvedStateFactory(DenunciationStateFactory):
 
     class Meta:
-        model = models.SolvedState
+        model = models.DoneState
 
 
 class WaitingStateFactory(DenunciationStateFactory):
