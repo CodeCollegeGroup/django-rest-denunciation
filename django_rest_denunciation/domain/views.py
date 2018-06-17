@@ -1,6 +1,6 @@
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, serializers
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_rest_denunciation.utils import except_smpt
@@ -19,14 +19,9 @@ class DomainViewSet(viewsets.ModelViewSet):
         data['administrator'] = self._get_admin_pk(username)
 
         serialized_data = self.serializer_class(data=data)
-
-        try:
-            serialized_data.is_valid(raise_exception=True)
-        except serializers.ValidationError:
-            return Response(serialized_data.errors,
-                            status.HTTP_400_BAD_REQUEST)
-
+        serialized_data.is_valid(raise_exception=True)
         serialized_data.save()
+
         # self._send_key_by_email(data.application_name)
 
         return Response({'ok': 'Domain registered!'})
@@ -90,12 +85,7 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
         data = request.data
         serialized_data = self.serializer_class(data=data)
 
-        try:
-            serialized_data.is_valid(raise_exception=True)
-        except serializers.ValidationError:
-            return Response(serialized_data.errors,
-                            status.HTTP_400_BAD_REQUEST)
-
+        serialized_data.is_valid(raise_exception=True)
         admin = DomainAdministrator.objects.create_user(
             username=data.pop('username'), password=data.pop('password'),
         )

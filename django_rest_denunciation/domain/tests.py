@@ -85,9 +85,9 @@ class DomainAdministratorTest(test.TestCase):
         response = self.client_test.post(
             '/api/domains/admins/',
             dumps({
-                'username': '',
+                'username': username,
                 'email': email,
-                'password': '',
+                'password': password,
                 'first_name': first_name,
                 'last_name': last_name
             }),
