@@ -87,7 +87,7 @@ class TestDenunciationComplete(test.TestCase):
                        "categories": ["Racismo", "Plágio"],
                        "justification": "copiou imagem racista",
                        "domain": "http://localhost:8000/api/domains/domains/" +
-                        str(domain.id) + "/",
+                       str(domain.id) + "/",
                   },
                    "denouncer": {
                        "email": "denouncer@test.com"
