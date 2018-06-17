@@ -49,57 +49,41 @@ class DomainAdministratorTest(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_domain_administrator_ok(self):
-        username = 'test_user'
-        email = 'test@foo.com'
-        password = 'test_123'
-        first_name = 'Tester'
-        last_name = 'The Greater'
+        data = {'username': 'test_user', 'email': 'test@foo.com',
+                'password': 'test_123', 'first_name': 'Tester',
+                'last_name': 'The Greater'}
 
         response = self.client_test.post(
             '/api/domains/admins/',
-            dumps({
-                'username': username,
-                'email': email,
-                'password': password,
-                'first_name': first_name,
-                'last_name': last_name
-            }),
+            dumps(data),
             'application/json'
         )
         last_saved = DomainAdministrator.objects.last()
 
-        self.assertEqual(username, last_saved.username)
-        self.assertEqual(first_name, last_saved.first_name)
-        self.assertEqual(last_name, last_saved.last_name)
-        self.assertEqual(email, last_saved.email)
-        self.assertTrue(last_saved.check_password(password))
+        self.assertEqual(data['username'], last_saved.username)
+        self.assertEqual(data['first_name'], last_saved.first_name)
+        self.assertEqual(data['last_name'], last_saved.last_name)
+        self.assertEqual(data['email'], last_saved.email)
+        self.assertTrue(last_saved.check_password(data['password']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_create_domain_administrator_wrong(self):
-        username = ''
-        password = ''
-        email = 'test@foo.com'
-        first_name = 'Tester'
-        last_name = 'The Greater'
+        data = {'username': '', 'email': 'test@foo.com',
+                'password': '', 'first_name': 'Tester',
+                'last_name': 'The Greater'}
 
         response = self.client_test.post(
             '/api/domains/admins/',
-            dumps({
-                'username': username,
-                'email': email,
-                'password': password,
-                'first_name': first_name,
-                'last_name': last_name
-            }),
+            dumps(data),
             'application/json'
         )
         last_saved = DomainAdministrator.objects.last()
 
-        self.assertNotEqual(username, last_saved.username)
-        self.assertNotEqual(first_name, last_saved.first_name)
-        self.assertNotEqual(last_name, last_saved.last_name)
-        self.assertNotEqual(email, last_saved.email)
-        self.assertFalse(last_saved.check_password(password))
+        self.assertNotEqual(data['username'], last_saved.username)
+        self.assertNotEqual(data['first_name'], last_saved.first_name)
+        self.assertNotEqual(data['last_name'], last_saved.last_name)
+        self.assertNotEqual(data['email'], last_saved.email)
+        self.assertFalse(last_saved.check_password(data['password']))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
