@@ -1,11 +1,53 @@
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework.response import Response
-from denunciation.models import Denunciation, Denunciable, Denouncer
+from rest_framework import status
 from json import loads
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
-from django.urls import reverse
+from rest_framework import viewsets
+from rest_framework.decorators import api_view
+from .serializers import (
+    DenunciableSerializer,
+    DenunciationCategorySerializer,
+    DenouncerSerializer
+)
+from denunciation.models import (
+    Denunciation,
+    Denunciable,
+    Denouncer,
+    DenunciationCategory,
+    WaitingState,
+    NullState,
+    EvaluatingState,
+    DoneState
+)
+from denunciation.auxiliary_methods import (
+    add_denouncer,
+    get_main_urls,
+    get_categories_urls,
+    get_dict_denunciation
+)
+
+
+def make_nullstate():
+    return NullState.objects.create()
+
+
+def make_evaluatingstate(denunciation):
+
+    if denunciation.current_state.name == 'WaitingState':
+        return EvaluatingState.objects.create()
+    else:
+        return None
+
+
+def make_waitingstate(denunciation):
+
+    if denunciation.current_state.name == 'NullState':
+        return WaitingState.objects.create()
+    else:
+        return None
 
 
 class DenunciationList(APIView):
