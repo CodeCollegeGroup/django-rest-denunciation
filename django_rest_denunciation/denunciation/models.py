@@ -1,5 +1,4 @@
 from singleton_model import SingletonModel
-from abstract_related_model.models import AbstractRelatedModel
 from django.db import models
 
 

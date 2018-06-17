@@ -66,13 +66,13 @@ class TestDenunciationStates(test.TestCase):
 
 class TestDenunciationComplete(test.TestCase):
 
-   def setUp(self):
+    def setUp(self):
         DenunciationCategory.objects.create(name='Racismo', gravity='H')
         DenunciationCategory.objects.create(name='Plágio', gravity='M')
 
         self.client = test.Client()
 
-   def test_create(self):
+    def test_create(self):
         response = self.client.post(
             '/api/denunciations/denunciation-complete/',
             dumps({"denunciable": {
