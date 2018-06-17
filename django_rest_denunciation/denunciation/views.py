@@ -46,6 +46,8 @@ class DenunciationCategoryViewSet(viewsets.ModelViewSet):
 
 class DenunciationCompleteList(APIView):
 
+    throttle_classes = (DenouncerRateThrottle,)
+
     def post(self, request, format=None):
         denunciable, denunciation = self._get_splitted_data(request)
         saved_denunciable = self._save_serialized(
