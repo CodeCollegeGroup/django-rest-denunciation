@@ -69,7 +69,8 @@ class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
         'Denunciable',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='denunciation'
     )
 
     current_state = models.ForeignKey(
