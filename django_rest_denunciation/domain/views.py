@@ -1,9 +1,9 @@
-from smtplib import SMTPException
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django_rest_denunciation.utils import except_smpt
 from .models import Domain, DomainAdministrator
 from .serializers import DomainSerializer, DomainAdministratorSerializer
 
@@ -59,46 +59,31 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
     serializer_class = DomainAdministratorSerializer
     queryset = DomainAdministrator.objects.all()
 
+    @except_smpt
     @action(methods=['put'], detail=False)
     def reset_password(self, request):  # pylint: disable=no-self-use
         """Reset password sending in e-mail"""
 
         data = request.data
-        try:
-            user = get_object_or_404(
-                DomainAdministrator,
-                email=data.get('email'),
-            )
-            user.recover_password()
-        except SMTPException:
-            return Response(
-                {'detail': 'error while sending email'},
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        user = get_object_or_404(DomainAdministrator, email=data.get('email'))
+        user.recover_password()
         return Response({'ok': 'password reseted'}, status.HTTP_200_OK)
 
+    @except_smpt
     @action(methods=['get'], detail=False)
     def recover_domain_key(self, request):  # pylint: disable=no-self-use
         """Send Domain key to the domain administrator"""
 
         data = request.query_params.copy()
-        try:
-            domain = get_object_or_404(
-                Domain,
-                application_name=data.get('application_name')
-            )
-            admin = domain.administrator
-            message = """Olá,\nA chave do seu domínio '{}' é\n
-                         Chave: {}""".format(domain.uri, domain.key)
-            admin.send_email(
-                'Equipe Django Rest Denunciation',
-                message
-            )
-        except SMTPException:
-            return Response(
-                {'detail': 'error while sending email'},
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        domain = get_object_or_404(
+            Domain, application_name=data.get('application_name')
+        )
+        admin = domain.administrator
+        message = """Olá,\nA chave do seu domínio '{}' é\n
+                     Chave: {}""".format(domain.uri, domain.key)
+        admin.send_email(
+            'Equipe Django Rest Denunciation', message
+        )
         return Response({'ok': 'domain key recovered'}, status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -112,8 +97,7 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
                             status.HTTP_400_BAD_REQUEST)
 
         admin = DomainAdministrator.objects.create_user(
-            username=data.pop('username'),
-            password=data.pop('password'),
+            username=data.pop('username'), password=data.pop('password'),
         )
         serialized_data.update(validated_data=data, instance=admin)
 
