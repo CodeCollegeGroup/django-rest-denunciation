@@ -1,13 +1,13 @@
-from rest_framework.throttling import (
-    UserRateThrottle
-)
-from denunciation.models import Denunciation
 from datetime import (
     datetime,
     date,
     time
 )
 import json
+from rest_framework.throttling import (
+    UserRateThrottle
+)
+from denunciation.models import Denunciation
 
 
 class DenouncerRateThrottle(UserRateThrottle):
@@ -16,8 +16,8 @@ class DenouncerRateThrottle(UserRateThrottle):
 
     def allow_request(self, request, view):
 
-        self.key = self.get_cache_key(request, view)
-        self.history = self.cache.get(self.key, [])
+        self.key = self.get_cache_key(request, view)  # pylint: disable=W0201
+        self.history = self.cache.get(self.key, [])  # pylint: disable=W0201
 
         data = json.loads(request.body.decode('utf-8'))
 
