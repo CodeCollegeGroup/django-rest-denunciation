@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework.response import Response
-from denunciation.models import Denunciation, Denunciable
+from denunciation.models import Denunciation, Denunciable, Denouncer
 from json import loads
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
@@ -45,6 +45,28 @@ class DenunciationList(APIView):
 
         return Response(denunciations_dict_list)
 
+    def denunciable_save(self, data):
+        denunciable = Denunciable()
+        denunciable.denunciable_id = data['denunciable_id']
+        denunciable.denunciable_type = data['denunciable_type']
+        denunciable.save()
+
+        return denunciable
+
+    def denouncer_save(self, data):
+        denouncer = Denouncer()
+        denouncer.email = data['denouncer_id']
+        denouncer.save()
+
+        return denouncer
+
+    def denunciation_save(self, data, denunciable, denouncer):
+        denunciation = Denunciation()
+        denunciation.justification = data['justification']
+        denunciation.denunciable = denunciable
+        denunciation.denouncer = denouncer
+        denunciation.save()
+
     # create
     def post(self, request, format=None):
 
@@ -60,18 +82,13 @@ class DenunciationList(APIView):
                     denunciable_id=data['denunciable_id']
                 )
             else:
-                denunciable = Denunciable()
-                denunciable.denunciable_id = data['denunciable_id']
-                denunciable.denunciable_type = data['denunciable_type']
-                denunciable.save()
+                denunciable = self.denunciable_save(data)
 
-            denunciation = Denunciation()
-            denunciation.justification = data['justification']
-            denunciation.denunciable = denunciable
-            denunciation.save()
+            denouncer = self.denouncer_save(data)
+
+            self.denunciation_save(data, denunciable, denouncer)
 
             response = Response(status=201)
-
         except ValidationError:
                 response = Response(status=400)
 
