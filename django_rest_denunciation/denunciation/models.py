@@ -80,7 +80,7 @@ class Denunciation(models.Model):
 
     categories = models.ManyToManyField('DenunciationCategory')
 
-    domain = models.ForeignKey(Domain, on_delete=models.SET_NULL, null=True)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE, null=False)
 
     justification = models.CharField(max_length=500)
 
