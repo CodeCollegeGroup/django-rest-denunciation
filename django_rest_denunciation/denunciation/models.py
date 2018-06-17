@@ -4,6 +4,8 @@ from django.db import models
 
 class DenunciationState(SingletonModel):
 
+    name = models.CharField(max_length=100, default='')
+
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
     )
@@ -24,6 +26,11 @@ class NullState(DenunciationState):
     def specific_notify_denunciator(self):
         raise Exception('Specific notifier')
 
+    def save(self, *args, **kwargs):
+        # pylint: disable=arguments-differ
+        self.name = 'NullState'
+        super(DenunciationState, self).save(*args, **kwargs)
+
 
 class EvaluatingState(DenunciationState):
 
@@ -32,6 +39,11 @@ class EvaluatingState(DenunciationState):
 
     def specific_notify_denunciator(self):
         pass
+
+    def save(self, *args, **kwargs):
+        # pylint: disable=arguments-differ
+        self.name = 'EvaluatingState'
+        super(DenunciationState, self).save(*args, **kwargs)
 
 
 class WaitingState(DenunciationState):
@@ -42,6 +54,11 @@ class WaitingState(DenunciationState):
     def specific_notify_denunciator(self):
         pass
 
+    def save(self, *args, **kwargs):
+        # pylint: disable=arguments-differ
+        self.name = 'WaitingState'
+        super(DenunciationState, self).save(*args, **kwargs)
+
 
 class DoneState(DenunciationState):
 
@@ -50,6 +67,11 @@ class DoneState(DenunciationState):
 
     def specific_notify_denunciator(self):
         pass
+
+    def save(self, *args, **kwargs):
+        # pylint: disable=arguments-differ
+        self.name = 'DoneState'
+        super(DenunciationState, self).save(*args, **kwargs)
 
 
 class Denunciable(models.Model):
