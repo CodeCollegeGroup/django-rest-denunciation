@@ -3,6 +3,24 @@ from django.db import models
 from domain.models import Domain
 
 
+GRAVITY_MAP = {
+    'High': 2,
+    'Medium': 1,
+    'Low': 0
+}
+
+
+def map_gravity(gravity):
+    if gravity in ('High', 'Medium', 'Low'):
+        gravity = GRAVITY_MAP[gravity]
+    elif gravity in (0, 1, 2):
+        pass
+    else:
+        raise Exception('Gravity can only be 0, 1 or 2 on db')
+
+    return gravity
+
+
 class DenunciationState(SingletonModel):
 
     _not_implemented_exception = NotImplementedError(
@@ -69,6 +87,22 @@ class Denunciable(models.Model):
         unique_together = ('denunciable_id', 'denunciable_type')
 
 
+class DenunciationCategory(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    gravity = models.PositiveIntegerField()
+
+
+    def save(self, *args, **kwargs):
+        self.gravity = map_gravity(self.gravity)
+
+        super(DenunciationCategory, self).save(*args, **kwargs)
+
+
 class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
@@ -93,6 +127,8 @@ class Denunciation(models.Model):
 
     created_at = models.DateField(auto_now_add=True)
 
+    gravity = models.IntegerField(editable=False)
+
     _initial_state = WaitingState
 
     def delete_denunciation(self):
@@ -115,33 +151,9 @@ class Denunciation(models.Model):
         initial_state = self._initial_state.objects.create()
         self.current_state = initial_state
 
+        categories_gravities = [category.gravity for category in
+                                DenunciationCategory.objects.all()]
+        categories_gravities += [0]
+        self.gravity = max(categories_gravities)
+
         super(Denunciation, self).save(*args, **kwargs)
-
-
-class DenunciationCategory(models.Model):
-
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-    )
-
-    ## Cannot use this because gambiarra on serializers and here
-    #GRAVITY_CHOICES = (
-    #    (2, 2),  # High
-    #    (1, 1),  # Medium
-    #    (0, 0)   # Low
-    #)
-
-    gravity = models.CharField(max_length=10)
-
-    gravity_map = {
-        'High': '2',
-        'Medium': '1',
-        'Low': '0'
-    }
-
-    def save(self, *args, **kwargs):
-        if self.gravity in ('High', 'Medium', 'Low'):
-            self.gravity = self.gravity_map[self.gravity]
-
-        super(DenunciationCategory, self).save(*args, **kwargs)

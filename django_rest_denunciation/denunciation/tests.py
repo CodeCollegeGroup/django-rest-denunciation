@@ -64,8 +64,10 @@ class TestDenunciationStates(test.TestCase):
 class TestDenunciationComplete(test.TestCase):
 
     def setUp(self):
-        DenunciationCategory.objects.create(name='Racismo', gravity='H')
-        DenunciationCategory.objects.create(name='Plágio', gravity='M')
+        DenunciationCategory.objects.create(name='Racismo',
+                                            gravity='High')
+        DenunciationCategory.objects.create(name='Plágio',
+                                            gravity='Medium')
 
         self.client = test.Client()
 
@@ -103,23 +105,24 @@ class TestDenunciationQueue(test.TestCase):
             justification='justification',
             denunciable=self.denunciable
         )
+        self.denunciation_url = self._get_detail_url(self.denunciation.pk)
         self.client = test.Client()
 
     def test_get_queue(self):
         response = self.client.get('/api/denunciations/denunciation-queue/')
 
-        denunciation_url = reverse('denunciation-detail',
-                                   kwargs={'pk': self.denunciation.pk})
-
-        path = reverse('denunciation-detail',
-                       kwargs={'pk': self.denunciation.pk})
-        denunciation_url = 'http://testserver' + path
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data, 
-            ("{{'denunciation_queue': ['{}']}}").format(denunciation_url)
+            ("{{'denunciation_queue': ['{}']}}").format(self.denunciation_url)
         )
+
+    @staticmethod
+    def _get_detail_url(pk):
+        path = reverse('denunciation-detail', kwargs={'pk': pk})
+        denunciation_url = 'http://testserver' + path
+
+        return denunciation_url
 
 
 class TestDenunciationCategory(test.TestCase):
@@ -139,7 +142,7 @@ class TestDenunciationCategory(test.TestCase):
         saved_gravity = response.data['gravity']
         self.assertEqual(saved_gravity, gravity_representation)
 
-    def test_post_gravity_gravity_representation(self):
+    def test_post_gravity_representation(self):
         data = {'name': 'Plágio',
                 'gravity': 'Medium'}
 
@@ -152,4 +155,4 @@ class TestDenunciationCategory(test.TestCase):
         saved_gravity = DenunciationCategory.objects.last().gravity
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(saved_gravity, '1')
+        self.assertEqual(saved_gravity, 1)
