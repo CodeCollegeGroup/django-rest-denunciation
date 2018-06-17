@@ -1,12 +1,27 @@
-from django.test import TestCase
-from .models import Denunciation, NullState
+from json import dumps
+from django import test
+from rest_framework import status
+from .models import (
+    Denunciation,
+    NullState,
+    Denunciable,
+    DenunciationCategory
+)
 
 
-class TestDenunciationStates(TestCase):
+class TestDenunciationStates(test.TestCase):
 
     def setUp(self):
         self.null_state = NullState.objects.create()
-        self.denunciation = Denunciation(justification='justification')
+        self.denunciable = Denunciable.objects.create(
+            denunciable_id=1,
+            denunciable_type='type'
+        )
+
+        self.denunciation = Denunciation(
+            justification='justification',
+            denunciable=self.denunciable
+        )
 
     def test_save_denunciation(self):
         self.denunciation.save()
@@ -47,3 +62,33 @@ class TestDenunciationStates(TestCase):
 
         with self.assertRaisesMessage(Exception, exception_message):
             tested_method()
+
+
+class TestDenunciationComplete(test.TestCase):
+
+    def setUp(self):
+        DenunciationCategory.objects.create(name='Racismo', gravity='H')
+        DenunciationCategory.objects.create(name='Plágio', gravity='M')
+
+        self.client = test.Client()
+
+    def test_create(self):
+        response = self.client.post(
+            '/api/denunciations/denunciation-complete/',
+            dumps({"denunciable": {
+                       "denunciable_id": 30,
+                       "denunciable_type": "imagem"
+                  },
+                   "denunciation": {
+                       "categories": ["Racismo", "Plágio"],
+                       "justification": "copiou imagem racista"
+                  },
+            }),
+            content_type='application/json'
+        )
+
+        denunciation = Denunciation.objects.last()
+        denunciable = Denunciable.objects.last()
+
+        self.assertEqual(denunciation.denunciable, denunciable)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
