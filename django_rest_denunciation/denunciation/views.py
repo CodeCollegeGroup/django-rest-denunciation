@@ -37,7 +37,9 @@ class DenunciationCompleteList(APIView):
 
     def post(self, request, format=None):
         denunciable, denunciation = self._get_splitted_data(request)
-        saved_denunciable = self._save_denunciable(denunciable, request)
+        saved_denunciable = self._save_serialized(
+            denunciable, DenunciableSerializer, request
+        )
 
         categories_data = denunciation['categories']
         categories_urls = self._get_categories_urls(categories_data, request)
@@ -47,31 +49,21 @@ class DenunciationCompleteList(APIView):
         denunciation['categories'] = categories_urls
         denunciation['denunciable'] = denunciable_url
 
-        self._save_denunciation(denunciation, request)
+        self._save_serialized(denunciation, DenunciationSerializer, request)
 
         ok_status = {'ok': 'Complete denunciation saved successfully'}
         return Response(ok_status, status.HTTP_201_CREATED)
 
     @staticmethod
-    def _save_denunciation(denunciation_data, request):
-        denunciation_serialized = DenunciationSerializer(
-            data=denunciation_data, context={'request': request}
+    def _save_serialized(data, serializer_class, request):
+        serialized_data = serializer_class(
+            data=data, context={'request': request}
         )
 
-        denunciation_serialized.is_valid(raise_exception=True)
-        saved_denunciation = denunciation_serialized.save()
+        serialized_data.is_valid(raise_exception=True)
+        saved_serialized = serialized_data.save()
 
-        return saved_denunciation
-
-    @staticmethod
-    def _save_denunciable(denunciable_data, request):
-        denunciable_serialized = DenunciableSerializer(
-            data=denunciable_data, context={'request': request}
-        )
-        denunciable_serialized.is_valid(raise_exception=True)
-        saved_denunciable = denunciable_serialized.save()
-
-        return saved_denunciable
+        return saved_serialized
 
     @staticmethod
     def _get_denunciable_url(denunciable, request):
