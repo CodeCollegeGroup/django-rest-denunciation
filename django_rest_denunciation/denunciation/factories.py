@@ -4,6 +4,7 @@ from factory.fuzzy import (
     FuzzyChoice
 )
 from . import models
+from domain.factories import DomainFactory
 
 
 class DenunciableFactory(factory.DjangoModelFactory):
@@ -28,6 +29,10 @@ class DenunciationFactory(factory.DjangoModelFactory):
     justification = factory.Faker(
         'word'
     )
+
+    denunciable = DenunciableFactory()
+
+    domain = DomainFactory()
 
 
 class DenunciationStateFactory(factory.DjangoModelFactory):
