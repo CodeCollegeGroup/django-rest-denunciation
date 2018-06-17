@@ -91,6 +91,33 @@ class TestDenunciationComplete(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
+class TestDenunciationQueue(test.TestCase):
+
+    def setUp(self):
+        self.denunciable = Denunciable.objects.create(
+            denunciable_id=1,
+            denunciable_type='type'
+        )
+
+        self.denunciation = Denunciation.objects.create(
+            justification='justification',
+            denunciable=self.denunciable
+        )
+        self.client = test.Client()
+
+    def test_get_queue(self):
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {
+                'start': '2018-06-17',
+                'end': '2018-06-17',
+                'queries': ['gravity'],
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
 class TestDenunciationCategory(test.TestCase):
 
     def setUp(self):

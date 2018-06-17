@@ -42,3 +42,12 @@ class DenunciationCategorySerializer(serializers.HyperlinkedModelSerializer):
             field_view['gravity'] = self.gravity_map[gravity]
 
         return field_view
+
+
+class DenunciationQueueSerializer(serializers.Serializer):
+
+    denunciation_queue = serializers.HyperlinkedRelatedField(
+        view_name='denunciation-detail',
+        many=True,
+        read_only=True
+    )

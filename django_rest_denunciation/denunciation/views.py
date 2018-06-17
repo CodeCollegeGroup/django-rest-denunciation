@@ -6,12 +6,14 @@ from rest_framework.response import Response
 from .models import (
     Denunciation,
     Denunciable,
-    DenunciationCategory
+    DenunciationCategory,
+    WaitingState
 )
 from .serializers import (
     DenunciationSerializer,
     DenunciableSerializer,
-    DenunciationCategorySerializer
+    DenunciationCategorySerializer,
+    DenunciationQueueSerializer
 )
 
 
@@ -99,3 +101,34 @@ class DenunciationCompleteList(APIView):
             )
 
         return denunciable, denunciation
+
+
+class DenunciationQueueViewList(APIView):
+
+    filters = ('start', 'end')
+    queries_map = {
+        'gravity': 'denunciation__categories__gravity',
+        '-gravity': '-denunciation__categories__gravity'
+    }
+
+    def get(self, request, format=None):
+        data = request.query_params.copy()
+        queryset = self._get_initial_queryset()
+
+        end_data = {'denunciation_queue': queryset}
+
+        serialized_queryset = DenunciationQueueSerializer(
+            end_data,
+            context={'request': request}
+        )
+
+        return Response(
+            {'ok': str(serialized_queryset.data)},
+            status.HTTP_200_OK
+        )
+
+    @staticmethod
+    def _get_initial_queryset():
+        return Denunciation.objects.filter(
+            current_state=WaitingState.objects.last()
+        )

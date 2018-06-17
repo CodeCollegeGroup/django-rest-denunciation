@@ -9,6 +9,10 @@ class DenunciationState(SingletonModel):
         'This method must be implemented at all children classes'
     )
 
+    @property
+    def name(self):
+        return self.__class__.__name__.lower()
+
     def specific_delete(self):
         raise self._not_implemented_exception
 
@@ -79,9 +83,15 @@ class Denunciation(models.Model):
 
     categories = models.ManyToManyField('DenunciationCategory')
 
-    domain = models.ForeignKey(Domain, on_delete=models.SET_NULL, null=True)
+    domain = models.ForeignKey(
+        Domain,
+        on_delete=models.SET_NULL,
+        null=True
+    )
 
     justification = models.CharField(max_length=500)
+
+    created_at = models.DateField(auto_now_add=True)
 
     _initial_state = WaitingState
 
@@ -115,13 +125,23 @@ class DenunciationCategory(models.Model):
         unique=True,
     )
 
-    GRAVITY_CHOICES = (
-        ('High', 'H'),
-        ('Medium', 'M'),
-        ('Low', 'L')
-    )
+    ## Cannot use this because gambiarra on serializers and here
+    #GRAVITY_CHOICES = (
+    #    (2, 2),  # High
+    #    (1, 1),  # Medium
+    #    (0, 0)   # Low
+    #)
 
-    gravity = models.CharField(
-        max_length=10,
-        choices=GRAVITY_CHOICES,
-    )
+    gravity = models.CharField(max_length=10)
+
+    gravity_map = {
+        'High': '2',
+        'Medium': '1',
+        'Low': '0'
+    }
+
+    def save(self, *args, **kwargs):
+        if self.gravity in ('High', 'Medium', 'Low'):
+            self.gravity = self.gravity_map[self.gravity]
+
+        super(DenunciationCategory, self).save(*args, **kwargs)
