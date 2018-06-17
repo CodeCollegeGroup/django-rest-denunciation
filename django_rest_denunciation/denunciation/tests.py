@@ -131,16 +131,27 @@ class TestDenunciation(test.TestCase):
         return response
 
     def test_create(self):
-        response = self.response_post(self.json1)
 
+        response = self.response_post(self.json1)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_index(self):
-        response = self.response_post(self.json1)
+        response = self.client.get('/api/denunciation/1/evaluating/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        denunciation = Denunciation.objects.get(pk=1)
+        self.assertEqual(denunciation.current_state.name, 'EvaluatingState')
 
+        response = self.client.patch(
+            '/api/denunciation/1/done/',
+            dumps(self.json5),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_2(self):
         response = self.response_post(self.json2)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
