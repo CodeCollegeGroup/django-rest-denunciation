@@ -48,7 +48,6 @@ THIRD_PARTY_APPS = [
     'abstract_related_model',
     'rest_framework',
     'django_extensions',
-    'rest_framework.authtoken'
 ]
 
 INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS + THIRD_PARTY_APPS
@@ -123,12 +122,6 @@ REST_FRAMEWORK = {
         'user': '1000/day',
         'denouncer': '2/day'
     },
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
 }
 
 
