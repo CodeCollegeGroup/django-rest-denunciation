@@ -5,13 +5,15 @@ from .views import (
     DenunciableViewSet,
     DenunciationCategoryViewSet,
     DenunciationCompleteList,
-    DenunciationQueueViewList
+    DenunciationQueueViewList,
+    DenunciationStateViewSet
 )
 
 ROUTER = routers.DefaultRouter()
 ROUTER.register(r'denunciation', DenunciationViewSet)
 ROUTER.register(r'denunciable', DenunciableViewSet)
 ROUTER.register(r'denunciation-category', DenunciationCategoryViewSet)
+ROUTER.register(r'denunciation-state', DenunciationStateViewSet)
 
 urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 

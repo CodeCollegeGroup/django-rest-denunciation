@@ -1,10 +1,9 @@
-from rest_framework import serializers, status
-from rest_framework.fields import empty
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 from .models import (
     Denunciation,
     Denunciable,
     DenunciationCategory,
+    DenunciationState
 )
 
 
@@ -24,7 +23,7 @@ class GravitedSerializer(serializers.HyperlinkedModelSerializer):
         0: 'Low'
     }
 
-    gravity_map_to_int = dict((v,k) for k,v in gravity_map_to_str.items())
+    gravity_map_to_int = dict((v, k) for k, v in gravity_map_to_str.items())
 
     def is_valid(self, raise_exception=False):
         gravity = self.initial_data.get('gravity', None)
@@ -62,9 +61,17 @@ class DenunciationCategorySerializer(GravitedSerializer):
 
 
 class DenunciationQueueSerializer(serializers.Serializer):
+    # pylint: disable=abstract-method
 
     denunciation_queue = serializers.HyperlinkedRelatedField(
         view_name='denunciation-detail',
         many=True,
         read_only=True
     )
+
+
+class DenunciationStateSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = DenunciationState
+        fields = '__all__'

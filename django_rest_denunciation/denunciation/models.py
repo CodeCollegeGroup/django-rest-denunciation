@@ -96,8 +96,7 @@ class DenunciationCategory(models.Model):
 
     gravity = models.PositiveIntegerField()
 
-
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         self.gravity = map_gravity(self.gravity)
 
         super(DenunciationCategory, self).save(*args, **kwargs)
@@ -151,9 +150,11 @@ class Denunciation(models.Model):
         initial_state = self._initial_state.objects.create()
         self.current_state = initial_state
 
-        categories_gravities = [category.gravity for category in
-                                DenunciationCategory.objects.all()]
-        categories_gravities += [0]
+        if self.id:
+            categories_gravities = [category.gravity for category in
+                                    self.categories.all()]
+        else:
+            categories_gravities = [0]
         self.gravity = max(categories_gravities)
 
         super(Denunciation, self).save(*args, **kwargs)
