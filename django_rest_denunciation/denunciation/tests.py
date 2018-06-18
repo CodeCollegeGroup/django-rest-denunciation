@@ -184,8 +184,10 @@ class TestDenunciationQueue(test.TestCase):
             justification='justification_2',
             denunciable=self.denunciable
         )
+        denunciation2.created_at = str(datetime.date(2018, 6, 12))
+        denunciation2.save()
         category1 = DenunciationCategory.objects.create(name='Racismo',
-                                                             gravity='Medium')
+                                                             gravity='High')
         category2 = DenunciationCategory.objects.create(name='Plágio',
                                                              gravity='High')
         self.denunciation.categories.add(category1)
@@ -195,19 +197,19 @@ class TestDenunciationQueue(test.TestCase):
 
         response = self.client.get(
             '/api/denunciations/denunciation-queue/',
-            {'queries': ['gravity']}
+            {'queries': ['gravity', 'date']}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, (
             '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(denunciation2.pk),
                 self._get_detail_url(self.denunciation.pk),
-                self._get_detail_url(denunciation2.pk)
         ))
 
         response = self.client.get(
             '/api/denunciations/denunciation-queue/',
-            {'queries': ['-gravity']}
+            {'queries': ['-gravity', 'date']}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -215,6 +217,30 @@ class TestDenunciationQueue(test.TestCase):
             '{{"denunciation_queue": ["{}", "{}"]}}').format(
                 self._get_detail_url(denunciation2.pk),
                 self._get_detail_url(self.denunciation.pk)
+        ))
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'queries': ['-date', 'gravity']}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, (
+            '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(self.denunciation.pk),
+                self._get_detail_url(denunciation2.pk),
+        ))
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'queries': ['-date', '-gravity']}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, (
+            '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(self.denunciation.pk),
+                self._get_detail_url(denunciation2.pk)
         ))
 
     @staticmethod

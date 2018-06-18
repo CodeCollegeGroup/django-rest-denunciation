@@ -117,7 +117,9 @@ class DenunciationQueueViewList(APIView):
     filters = ('start', 'end')
     queries_map = {
         'gravity': 'gravity',
-        '-gravity': '-gravity'
+        '-gravity': '-gravity',
+        'date': 'created_at',
+        '-date': '-created_at',
     }
 
     def get(self, request, format=None):  # pylint: disable=redefined-builtin
@@ -126,7 +128,8 @@ class DenunciationQueueViewList(APIView):
 
         queryset = self._filter_date(queryset, data)
 
-        queries = [data.get('queries', None)]
+        queries = data.getlist('queries')
+
         if None not in queries:
             queryset = self._apply_queries(queryset, queries)
 

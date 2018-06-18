@@ -153,6 +153,7 @@ class Denunciation(models.Model):
         if self.id:
             categories_gravities = [category.gravity for category in
                                     self.categories.all()]
+            categories_gravities += [0]
         else:
             categories_gravities = [0]
         self.gravity = max(categories_gravities)
