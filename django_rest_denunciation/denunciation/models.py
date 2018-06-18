@@ -41,13 +41,13 @@ class EvaluatingState(DenunciationState):
 
     def specific_notify_denunciator(self):
         for denunciation in self.denunciations:
-        denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
-        send_mail('Denunciaton is being evalueted',
-                  'Here is the message.',
-                  'from@example.com',
-                  [denouncer.email],
-                  fail_silently=False,
-                 )
+            denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
+            send_mail('Denunciaton is being evalueted',
+                      'Here is the message.',
+                      'from@example.com',
+                      [denouncer.email],
+                      fail_silently=False,
+                     )
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
@@ -62,13 +62,13 @@ class WaitingState(DenunciationState):
 
     def specific_notify_denunciator(self):
         for denunciation in self.denunciations:
-        denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
-        send_mail('Denunciaton is awaiting',
-                  'Here is the message.',
-                  'from@example.com',
-                  [denouncer.email],
-                  fail_silently=False,
-                 )
+            denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
+            send_mail('Denunciaton is awaiting',
+                      'Here is the message.',
+                      'from@example.com',
+                      [denouncer.email],
+                      fail_silently=False,
+                     )
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
@@ -83,13 +83,13 @@ class DoneState(DenunciationState):
 
     def specific_notify_denunciator(self):
         for denunciation in self.denunciations:
-        denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
-        send_mail('Denunciaton is done',
-                  'Here is the message.',
-                  'from@example.com',
-                  [denouncer.email],
-                  fail_silently=False,
-                 )
+            denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
+            send_mail('Denunciaton is done',
+                      'Here is the message.',
+                      'from@example.com',
+                      [denouncer.email],
+                      fail_silently=False,
+                     )
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
