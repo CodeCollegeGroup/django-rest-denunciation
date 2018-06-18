@@ -36,19 +36,7 @@ from .serializers import (
 
 def fetch_domain_post(data):
 
-    if Domain.objects.filter(key=data['key']).count() == 1:
-        return True
-    else:
-        return False
-
-
-def fetch_domain_get(req):
-
-    if Domain.objects.filter(key=req.META['HTTP_KEY']).count() == 1:
-
-        return Domain.objects.get(key=req.META['HTTP_KEY'])
-    else:
-        return None
+    return bool(Domain.objects.filter(key=data['key']).count() == 1)
 
 
 def get_object(pk):
@@ -58,105 +46,72 @@ def get_object(pk):
     except ObjectDoesNotExist:
         raise Http404
 
+
 def verify_d_domain(pk, request):
 
-    domain = fetch_domain_get(request)
+    domain = get_object_or_404(Domain, key=request.META['HTTP_KEY'])
     denunciation = get_object(pk)
     domain_d = Domain.objects.get(id=denunciation.domain.id)
 
-    if domain is not None and domain == domain_d:
-        return True
-    else:
-        return False
-    
-
-
-def make_nullstate():
-    return NullState.objects.create()
-
-
-def make_evaluatingstate(denunciation):
-
-    if denunciation.current_state.type_name == 'waitingstate':
-        return EvaluatingState.objects.create()
-    else:
-        return None
-
-
-def make_waitingstate(denunciation):
-
-    if denunciation.current_state.type_name == 'nullstate':
-        return WaitingState.objects.create()
-    else:
-        return None
+    return bool(domain is not None and domain == domain_d)
 
 
 def make_evaluate(data, denunciation):
-    try:
-        if denunciation.current_state.type_name == 'evaluatingstate':
-            denunciation.evaluation = data['evaluation']
-            denunciation.fake = data['fake']
-            denunciation.current_state = DoneState.objects.create()
-            denunciation.save()
-            if denunciation.fake and denunciation.denouncer is not None:
-                denouncer = denunciation.denouncer
-                denouncer.fake_denunciation += 1
-        else:
-            return Response(status=400)
-    except KeyError:
+
+    if denunciation.current_state.type_name == 'evaluatingstate':
+        denunciation.evaluation = data.get('evaluation')
+        denunciation.fake = data.get('fake')
+        denunciation.current_state = DoneState.objects.create()
+        denunciation.save()
+        if denunciation.fake and denunciation.denouncer is not None:
+            denouncer = denunciation.denouncer
+            denouncer.fake_denunciation += 1
+    else:
         return Response(status=400)
+
     return Response(status=200)
 
 
 def get_request_cond(name, denunciation):
-    new_state = None
 
+    den_state = denunciation.current_state.type_name
     if name == 'null':
-        new_state = make_nullstate()
-    elif name == 'evaluating':
-        new_state = make_evaluatingstate(denunciation)
-    elif name == 'waiting':
-        new_state = make_waitingstate(denunciation)
-    return new_state
+        denunciation.current_state = NullState.objects.create()
+    elif name == 'evaluating' and den_state == 'waitingstate':
+        denunciation.current_state = EvaluatingState.objects.create()
+    elif name == 'waiting' and den_state == 'nullstate':
+        denunciation.current_state = WaitingState.objects.create()
+
+    return denunciation
 
 
 @api_view(['GET', 'PATCH'])
 def change_denunciation_state(request, pk, name):
 
-    try:
-        denunciation = Denunciation.objects.get(pk=pk)
-    except Denunciation.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    denunciation = get_object_or_404(Denunciation, pk=pk)
+    response = Response()
+
+    if not verify_d_domain(pk, request):
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'GET':
 
-        if verify_d_domain(pk, request):
-            if name in ['null', 'evaluating', 'waiting']:
-                new_state = get_request_cond(name, denunciation)
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-
-            if new_state is not None:
-                denunciation.current_state = new_state
-                denunciation.save()
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+        if name in ['null', 'evaluating', 'waiting']:
+            denunciation = get_request_cond(name, denunciation)
+            denunciation.save()
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            response = Response(status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PATCH':
 
         data = loads(request.body.decode())
 
-        if verify_d_domain(pk, request):
-            if name == 'done':
-                return make_evaluate(data, denunciation)
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if name == 'done':
+            return make_evaluate(data, denunciation)
 
-    return Response(status=status.HTTP_200_OK)
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
+
+    return response
 
 
 class DenunciableViewSet(viewsets.ModelViewSet):
