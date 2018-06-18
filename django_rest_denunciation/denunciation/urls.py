@@ -34,7 +34,7 @@ urlpatterns += [
         change_denunciation_state
     ),
     url(
-        r'denunciation-queue', 
+        r'denunciation-queue',
         DenunciationQueueViewList.as_view()
     )
 ]
