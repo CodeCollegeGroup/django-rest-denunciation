@@ -52,7 +52,8 @@ class NullState(DenunciationState):
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
         self.type_name = 'nullstate'
-        super(DenunciationState, self).save(*args, **kwargs)
+        super(NullState, self).save(*args, **kwargs)
+
 
 class EvaluatingState(DenunciationState):
 
@@ -65,7 +66,8 @@ class EvaluatingState(DenunciationState):
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
         self.type_name = 'evaluatingstate'
-        super(DenunciationState, self).save(*args, **kwargs)
+        super(EvaluatingState, self).save(*args, **kwargs)
+
 
 class WaitingState(DenunciationState):
 
@@ -78,7 +80,8 @@ class WaitingState(DenunciationState):
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
         self.type_name = 'waitingstate'
-        super(DenunciationState, self).save(*args, **kwargs)
+        super(WaitingState, self).save(*args, **kwargs)
+
 
 class DoneState(DenunciationState):
 
@@ -91,7 +94,8 @@ class DoneState(DenunciationState):
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
         self.type_name = 'donestate'
-        super(DenunciationState, self).save(*args, **kwargs)
+        super(DoneState, self).save(*args, **kwargs)
+
 
 class Denunciable(models.Model):
 
