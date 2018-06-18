@@ -1,22 +1,12 @@
-from json import dumps
+from json import dumps, loads
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
-from django.http import Http404
 from rest_framework.response import Response
-from json import loads
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
-from rest_framework import viewsets
 from rest_framework.decorators import api_view
-from .serializers import (
-    DenunciationSerializer,
-    DenunciableSerializer,
-    DenunciationCategorySerializer,
-    DenunciationQueueSerializer,
-    DenunciationStateSerializer,
-    DenouncerSerializer
-)
+from django.shortcuts import get_object_or_404
+from django.http import Http404
+from django.core.exceptions import ObjectDoesNotExist
 from denunciation.models import (
     Denunciation,
     Denunciable,
@@ -35,6 +25,13 @@ from denunciation.auxiliary_methods import (
     get_dict_denunciation
 )
 from domain.models import Domain
+from .serializers import (
+    DenunciableSerializer,
+    DenunciationCategorySerializer,
+    DenunciationQueueSerializer,
+    DenunciationStateSerializer,
+    DenouncerSerializer
+)
 
 
 def fetch_domain_post(data):
