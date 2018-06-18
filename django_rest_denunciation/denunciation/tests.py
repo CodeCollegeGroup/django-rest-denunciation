@@ -221,7 +221,6 @@ class TestDenunciation(test.TestCase):
     def test_create_5(self):
         response = self.response_post(self.json4)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        print(response)
 
     def test_delete(self):
         response = self.response_post(self.json1)
