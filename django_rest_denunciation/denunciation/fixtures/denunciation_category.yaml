@@ -1,49 +1,49 @@
 - model: denunciation.DenunciationCategory
   fields:
     name: Spam
-    gravity: L
+    gravity: Low
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Pornografia
-    gravity: M
+    gravity: Medium
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Odio e Bullyng
-    gravity: M
+    gravity: Medium
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Auto Mutilacao
-    gravity: H
+    gravity: High
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Violencia
-    gravity: M
+    gravity: Medium
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Pornografia Infantil
-    gravity: H
+    gravity: High
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Atividades Ilegais
-    gravity: L
+    gravity: Low
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Conteudo Enganoso
-    gravity: L
+    gravity: Low
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Plagio
-    gravity: L
+    gravity: Low
 
 - model: denunciation.DenunciationCategory
   fields:
     name: Outros
-    gravity: L
+    gravity: Low
