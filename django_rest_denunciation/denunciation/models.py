@@ -23,7 +23,7 @@ def map_gravity(gravity):
 
 class DenunciationState(SingletonModel):
 
-    name = models.CharField(max_length=100, default='')
+    type_name = models.CharField(max_length=100)
 
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
@@ -51,9 +51,8 @@ class NullState(DenunciationState):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        self.name = 'NullState'
+        self.type_name = 'nullstate'
         super(DenunciationState, self).save(*args, **kwargs)
-
 
 class EvaluatingState(DenunciationState):
 
@@ -65,9 +64,8 @@ class EvaluatingState(DenunciationState):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        self.name = 'EvaluatingState'
+        self.type_name = 'evaluatingstate'
         super(DenunciationState, self).save(*args, **kwargs)
-
 
 class WaitingState(DenunciationState):
 
@@ -79,9 +77,8 @@ class WaitingState(DenunciationState):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        self.name = 'WaitingState'
+        self.type_name = 'waitingstate'
         super(DenunciationState, self).save(*args, **kwargs)
-
 
 class DoneState(DenunciationState):
 
@@ -93,9 +90,8 @@ class DoneState(DenunciationState):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        self.name = 'DoneState'
+        self.type_name = 'donestate'
         super(DenunciationState, self).save(*args, **kwargs)
-
 
 class Denunciable(models.Model):
 
@@ -141,13 +137,6 @@ class DenunciationCategory(models.Model):
         super(DenunciationCategory, self).save(*args, **kwargs)
 
 
-class Denouncer(models.Model):
-
-    email = models.CharField(max_length=100, unique=True)
-
-    fake_denunciation = models.IntegerField(default=0)
-
-
 class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
@@ -160,6 +149,7 @@ class Denunciation(models.Model):
     current_state = models.ForeignKey(
         'DenunciationState',
         on_delete=models.CASCADE,
+        null=True,
         help_text='The current state of the denunciation.'
         'it could be Null, Wainting, Evaluating and done.'
     )
