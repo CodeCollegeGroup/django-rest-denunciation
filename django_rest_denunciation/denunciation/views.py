@@ -4,6 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django_rest_denunciation.throttle import DenouncerRateThrottle
 from .models import (
     Denunciation,
     Denunciable,
@@ -45,6 +46,8 @@ class DenunciationStateViewSet(viewsets.ModelViewSet):
 
 
 class DenunciationCompleteList(APIView):
+
+    throttle_classes = (DenouncerRateThrottle,)
 
     def post(self, request, format=None):  # pylint: disable=redefined-builtin
         denunciable, denunciation = self._get_splitted_data(request)

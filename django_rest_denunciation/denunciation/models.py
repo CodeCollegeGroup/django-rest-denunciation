@@ -112,12 +112,20 @@ class DenunciationCategory(models.Model):
         super(DenunciationCategory, self).save(*args, **kwargs)
 
 
+class Denouncer(models.Model):
+
+    email = models.CharField(max_length=100, unique=True)
+
+    fake_denunciation = models.IntegerField(default=0)
+
+
 class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
         'Denunciable',
         on_delete=models.CASCADE,
-        help_text='Denunciable related to the denounce.'
+        help_text='Denunciable related to the denounce.',
+        related_name='denunciation'
     )
 
     current_state = models.ForeignKey(
@@ -154,6 +162,13 @@ class Denunciation(models.Model):
         editable=False,
         help_text='A integer that qualifies the gravity'
         'of the denunciation. it could be:0,1,2.'
+    )
+
+    denouncer = models.ForeignKey(
+            'denouncer',
+            related_name='denunciations',
+            on_delete=models.CASCADE,
+            null=True
     )
 
     _initial_state = WaitingState
