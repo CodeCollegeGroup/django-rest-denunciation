@@ -2,7 +2,8 @@ from rest_framework import serializers
 from .models import (
     Denunciable,
     DenunciationCategory,
-    Denouncer
+    Denouncer,
+    Denunciation
 )
 
 
@@ -24,4 +25,11 @@ class DenouncerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Denouncer
+        fields = '__all__'
+
+
+class DenunciationSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Denunciation
         fields = '__all__'

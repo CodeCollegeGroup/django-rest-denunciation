@@ -28,6 +28,24 @@ from denunciation.auxiliary_methods import (
     get_categories_urls,
     get_dict_denunciation
 )
+from domain.models import Domain
+
+
+def fetch_domain_post(data):
+
+    if Domain.objects.filter(key=data['key']).count() == 1:
+        return True
+    else:
+        return False
+
+
+def fetch_domain_get(req):
+
+    if Domain.objects.filter(key=req.META['HTTP_KEY']).count() == 1:
+
+        return Domain.objects.get(key=req.META['HTTP_KEY'])
+    else:
+        return None
 
 
 def make_nullstate():
@@ -89,21 +107,29 @@ def change_denunciation_state(request, pk, name):
 
     if request.method == 'GET':
 
-        if name in ['null', 'evaluating', 'waiting']:
-            new_state = get_request_cond(name, denunciation)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if fetch_domain_get(request):
+            if name in ['null', 'evaluating', 'waiting']:
+                new_state = get_request_cond(name, denunciation)
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        if new_state is not None:
-            denunciation.current_state = new_state
-            denunciation.save()
+            if new_state is not None:
+                denunciation.current_state = new_state
+                denunciation.save()
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PATCH':
-        if name == 'done':
-            data = loads(request.body.decode())
-            return make_evaluate(data, denunciation)
+
+        data = loads(request.body.decode())
+
+        if fetch_domain_post(data):
+            if name == 'done':
+                return make_evaluate(data, denunciation)
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -152,22 +178,27 @@ class DenunciationList(APIView):
     # index
     def get(self, request, format=None):
 
-        denunciations = Denunciation.objects.all()
+        domain = fetch_domain_get(request)
 
-        denunciations_dic_list = []
+        if domain is not None:
+            denunciations = Denunciation.objects.filter(domain_id=domain.id)
 
-        for denunciation in denunciations:
+            denunciations_dic_list = []
 
-            denunciation_dic = self.dict_denunciation_maker(
-                denunciation, request
-            )
+            for denunciation in denunciations:
 
-            if denunciation.current_state.name == 'DoneState':
-                denunciation_dic['evaluate'] = denunciation.evaluate
+                denunciation_dic = self.dict_denunciation_maker(
+                    denunciation, request
+                )
 
-            denunciations_dic_list.append(denunciation_dic)
+                if denunciation.current_state.name == 'DoneState':
+                    denunciation_dic['evaluate'] = denunciation.evaluate
 
-        return Response(denunciations_dic_list)
+                denunciations_dic_list.append(denunciation_dic)
+
+            return Response(denunciations_dic_list)
+        else:
+            return Response(status=400)
 
     @staticmethod
     def getDenunciable(d_id, d_type):
@@ -215,6 +246,7 @@ class DenunciationList(APIView):
             data['denunciable']['denunciable_type']
 
             data['denunciation']
+            data['key']
         except KeyError:
             raise ValidationError(code=status.HTTP_400_BAD_REQUEST)
 
@@ -276,6 +308,7 @@ class DenunciationList(APIView):
         denunciation = Denunciation()
         denunciation.current_state = WaitingState.objects.create()
         denunciation.justification = data['denunciation']['justification']
+        denunciation.domain = Domain.objects.get(key=data['key'])
         denunciation.denunciable = denunciable
         if 'denouncer' in data['denunciation']:
             denunciation.denouncer = denouncer
@@ -289,24 +322,29 @@ class DenunciationList(APIView):
         denouncer = None
         data = loads(request.body.decode())
         self.validate_keys(data)
-        denunciable = self.verify_denunciable(data)
-        if denunciable is None:
-            return Response(status=400)
-
-        if 'denouncer' in data['denunciation']:
-            denouncer = self.verify_denouncer(data)
-            if denouncer is None:
+        if fetch_domain_post(data):
+            denunciable = self.verify_denunciable(data)
+            if denunciable is None:
                 return Response(status=400)
 
-        try:
-            denunciation = self.save_denunciation(data, denunciable, denouncer)
+            if 'denouncer' in data['denunciation']:
+                denouncer = self.verify_denouncer(data)
+                if denouncer is None:
+                    return Response(status=400)
 
-            if not self.verify_categories(data, denunciation):
+            try:
+                denunciation = self.save_denunciation(
+                    data, denunciable, denouncer
+                )
+
+                if not self.verify_categories(data, denunciation):
+                    return Response(status=400)
+            except ValidationError:
                 return Response(status=400)
-        except ValidationError:
-            return Response(status=400)
 
-        return Response(status=201)
+            return Response(status=201)
+        else:
+            return Response(status=400)
 
 
 class DenunciationDetails(APIView):
@@ -321,12 +359,18 @@ class DenunciationDetails(APIView):
     # show
     def get(self, request, pk, format=None):
 
-        denunciation = self.get_object(pk)
-        d_dict = DenunciationList.dict_denunciation_maker(
-            denunciation, request
-        )
+        domain = fetch_domain_get(request)
 
-        return Response(d_dict)
+        if domain is not None:
+
+            denunciation = self.get_object(pk)
+            d_dict = DenunciationList.dict_denunciation_maker(
+                denunciation, request
+            )
+
+            return Response(d_dict)
+        else:
+            return Response(status=400)
 
     # delete
     def delete(self, request, pk, format=None):

@@ -6,6 +6,7 @@ from .models import (
     Denunciable,
     DenunciationCategory
 )
+from domain.models import Domain, DomainAdministrator
 
 
 class TestDenunciationStates(test.TestCase):
@@ -68,6 +69,15 @@ class TestDenunciationStates(test.TestCase):
 
 class TestDenunciation(test.TestCase):
 
+    def setUp(self):
+        DenunciationCategory.objects.create(name='Racismo', gravity='H')
+        DenunciationCategory.objects.create(name='Plágio', gravity='M')
+        self.adm = DomainAdministrator.objects.create(id=1)
+        self.dom = Domain()
+        self.dom.application_name = "www.test.com"
+        self.dom.administrator = self.adm
+        self.dom.save()
+
     json1 = {
         "denunciable": {
             "denunciable_id": 30,
@@ -117,33 +127,61 @@ class TestDenunciation(test.TestCase):
         "fake": True
     }
 
-    def setUp(self):
-        DenunciationCategory.objects.create(name='Racismo', gravity='H')
-        DenunciationCategory.objects.create(name='Plágio', gravity='M')
+    def format_dict(self, json):
+        json['key'] = self.dom.key
+
+        return json
 
     def response_post(self, json):
         response = self.client.post(
-            '/api/denunciation/',
-            dumps(json),
+            '/api/denunciations/denunciation/',
+            dumps(self.format_dict(json)),
             content_type='application/json'
         )
 
         return response
+
+    def test_index(self):
+
+        response = self.client.get(
+            '/api/denunciations/denunciation/',
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_show(self):
+
+        response = self.response_post(self.json1)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(
+            '/api/denunciations/denunciation/1/',
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_create(self):
 
         response = self.response_post(self.json1)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        response = self.client.get('/api/denunciation/1/evaluating/')
+        response = self.client.get(
+            '/api/denunciations/denunciation/1/evaluating/',
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         denunciation = Denunciation.objects.get(pk=1)
         self.assertEqual(denunciation.current_state.name, 'EvaluatingState')
 
         response = self.client.patch(
-            '/api/denunciation/1/done/',
-            dumps(self.json5),
+            '/api/denunciations/denunciation/1/done/',
+            dumps(self.format_dict(self.json5)),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -163,18 +201,27 @@ class TestDenunciation(test.TestCase):
         response = self.response_post(self.json1)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        response = self.client.get('/api/denunciation/1/null/')
+        response = self.client.get(
+            '/api/denunciations/denunciation/1/null/',
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         denunciation = Denunciation.objects.get(pk=1)
         self.assertEqual(denunciation.current_state.name, 'NullState')
 
-        response = self.client.get('/api/denunciation/1/waiting/')
+        response = self.client.get(
+            '/api/denunciations/denunciation/1/waiting/',
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_create_5(self):
         response = self.response_post(self.json4)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        print(response)
 
     def test_delete(self):
         response = self.response_post(self.json1)
@@ -182,7 +229,7 @@ class TestDenunciation(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         response = self.client.delete(
-            '/api/denunciation/1/',
+            '/api/denunciations/denunciation/1/',
             follow=False
         )
 

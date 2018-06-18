@@ -1,5 +1,6 @@
 from singleton_model import SingletonModel
 from django.db import models
+from domain.models import Domain
 
 
 class DenunciationState(SingletonModel):
@@ -95,6 +96,16 @@ class Denouncer(models.Model):
 
 class Denunciation(models.Model):
 
+    denunciable = models.ForeignKey(
+        'Denunciable',
+        on_delete=models.CASCADE
+    )
+
+    current_state = models.ForeignKey(
+        'DenunciationState',
+        on_delete=models.CASCADE,
+    )
+
     categories = models.ManyToManyField('DenunciationCategory')
 
     justification = models.CharField(max_length=500, default='')
@@ -106,6 +117,8 @@ class Denunciation(models.Model):
     )
 
     _initial_state = WaitingState
+
+    domain = models.ForeignKey(Domain, on_delete=models.SET_NULL, null=True)
 
     denunciable = models.ForeignKey(
         'Denunciable',
@@ -146,7 +159,10 @@ class Denunciation(models.Model):
 
 class DenunciationCategory(models.Model):
 
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
 
     GRAVITY_CHOICES = (
         ('High', 'H'),
