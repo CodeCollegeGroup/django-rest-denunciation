@@ -3,9 +3,7 @@ import datetime
 from django import test
 from django.urls import reverse
 from rest_framework import status
-from domain.factories import (
-    DomainFactory
-)
+from domain.models import Domain, DomainAdministrator
 from .models import (
     Denunciable,
     DenunciationCategory,
@@ -13,7 +11,6 @@ from .models import (
     NullState,
     WaitingState
 )
-from domain.models import Domain, DomainAdministrator
 
 
 class TestDenunciationStates(test.TestCase):
@@ -186,7 +183,9 @@ class TestDenunciation(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         denunciation = Denunciation.objects.get(pk=1)
-        self.assertEqual(denunciation.current_state.type_name, 'evaluatingstate')
+        self.assertEqual(
+            denunciation.current_state.type_name, 'evaluatingstate'
+        )
 
         response = self.client.patch(
             '/api/denunciations/denunciation/1/done/',
@@ -255,7 +254,6 @@ class TestDenunciation(test.TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        
         response = self.client.get(
             '/api/denunciations/denunciation/1/evaluating/',
             format='json',

@@ -77,6 +77,7 @@ class DenunciationStateSerializer(serializers.HyperlinkedModelSerializer):
         model = DenunciationState
         fields = '__all__'
 
+
 class DenouncerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
