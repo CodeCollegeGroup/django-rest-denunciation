@@ -3,14 +3,14 @@ import datetime
 from django import test
 from django.urls import reverse
 from rest_framework import status
+from domain.factories import (
+    DomainFactory
+)
 from .models import (
     Denunciation,
     NullState,
     Denunciable,
     DenunciationCategory
-)
-from domain.factories import (
-    DomainFactory
 )
 
 

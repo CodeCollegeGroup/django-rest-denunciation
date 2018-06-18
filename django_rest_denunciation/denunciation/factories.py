@@ -3,8 +3,8 @@ from factory.fuzzy import (
     FuzzyInteger,
     FuzzyChoice
 )
-from . import models
 from domain.factories import DomainFactory
+from . import models
 
 
 class DenunciableFactory(factory.DjangoModelFactory):
