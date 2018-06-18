@@ -102,6 +102,13 @@ class DenunciationCategory(models.Model):
         super(DenunciationCategory, self).save(*args, **kwargs)
 
 
+class Denouncer(models.Model):
+
+        email = models.CharField(max_length=100, unique=True)
+
+        fake_denunciation = models.IntegerField(default=0)
+
+
 class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
@@ -128,6 +135,13 @@ class Denunciation(models.Model):
     created_at = models.DateField(auto_now_add=True)
 
     gravity = models.IntegerField(editable=False)
+
+    denouncer = models.ForeignKey(
+            'denouncer',
+            related_name='denunciations',
+            on_delete=models.CASCADE,
+            null=True
+    )
 
     _initial_state = WaitingState
 
