@@ -4,16 +4,20 @@ from .views import (
     DenunciationViewSet,
     DenunciableViewSet,
     DenunciationCategoryViewSet,
-    DenunciationCompleteList
+    DenunciationCompleteList,
+    DenunciationQueueViewList,
+    DenunciationStateViewSet
 )
 
 ROUTER = routers.DefaultRouter()
 ROUTER.register(r'denunciation', DenunciationViewSet)
 ROUTER.register(r'denunciable', DenunciableViewSet)
 ROUTER.register(r'denunciation-category', DenunciationCategoryViewSet)
+ROUTER.register(r'denunciation-state', DenunciationStateViewSet)
 
 urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 
 urlpatterns += [
     url(r'denunciation-complete', DenunciationCompleteList.as_view()),
+    url(r'denunciation-queue', DenunciationQueueViewList.as_view()),
 ]

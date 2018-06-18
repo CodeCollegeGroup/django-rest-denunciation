@@ -1,6 +1,7 @@
 from json import dumps
 from django import test
 from rest_framework import status
+from rest_framework.test import APIClient
 from .factories import DomainAdministratorFactory, DomainFactory
 from .models import Domain, DomainAdministrator, KEY_LENGTH
 
@@ -9,6 +10,8 @@ class DomainAdministratorTest(test.TestCase):
 
     def setUp(self):
         self.admin = DomainAdministratorFactory.create()
+        self.admin.set_password('123')
+        self.admin.save()
         self.domain = DomainFactory.create(administrator=self.admin)
         self.client_test = test.Client()
 
@@ -32,8 +35,18 @@ class DomainAdministratorTest(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_recover_domain_key(self):
-        response = self.client_test.get(
-            '/api/domains/admins/recover_domain_key/',
+        client = APIClient()
+        response = self.client_test.post(
+            '/api/domains/authenticate/',
+            dumps({
+                'username': self.admin.username,
+                'password': '123'}),
+            'application/json'
+        )
+        token = 'JWT {}'.format(response.data['token'])
+        client.credentials(HTTP_AUTHORIZATION=token)
+        response = client.get(
+            '/api/domains/recover-domain-key/',
             {'application_name': self.domain.application_name},
         )
 
@@ -104,21 +117,34 @@ class DomainViewsTests(test.TestCase):
 
     def setUp(self):
         self.admin = DomainAdministratorFactory.create()
+        self.admin.set_password('123')
+        self.admin.save()
         self.client_test = test.Client()
 
     def test_create_domain_ok(self):
+        client = APIClient()
+        response = self.client_test.post(
+            '/api/domains/authenticate/',
+            dumps({
+                'username': self.admin.username,
+                'password': '123'}),
+            'application/json'
+        )
+        token = 'JWT {}'.format(response.data['token'])
+        client.credentials(HTTP_AUTHORIZATION=token)
+
         username = self.admin.username
         application_name = 'mywebsite'
         uri = 'http://www.mywebsite.com.br'
 
-        response = self.client_test.post(
+        response = client.post(
             '/api/domains/domains/',
             {'username': username,
              'application_name': application_name,
              'uri': uri}
         )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         last_saved = Domain.objects.last()
 
         self.assertEqual(application_name, last_saved.application_name)
         self.assertEqual(self.admin, last_saved.administrator)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)

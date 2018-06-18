@@ -1,3 +1,4 @@
+from json import dumps
 from django.urls import reverse
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
@@ -7,12 +8,16 @@ from django_rest_denunciation.throttle import DenouncerRateThrottle
 from .models import (
     Denunciation,
     Denunciable,
-    DenunciationCategory
+    DenunciationCategory,
+    WaitingState,
+    DenunciationState
 )
 from .serializers import (
     DenunciationSerializer,
     DenunciableSerializer,
-    DenunciationCategorySerializer
+    DenunciationCategorySerializer,
+    DenunciationQueueSerializer,
+    DenunciationStateSerializer
 )
 
 
@@ -34,11 +39,17 @@ class DenunciationCategoryViewSet(viewsets.ModelViewSet):
     queryset = DenunciationCategory.objects.all()
 
 
+class DenunciationStateViewSet(viewsets.ModelViewSet):
+
+    serializer_class = DenunciationStateSerializer
+    queryset = DenunciationState.objects.all()
+
+
 class DenunciationCompleteList(APIView):
 
     throttle_classes = (DenouncerRateThrottle,)
 
-    def post(self, request, format=None):
+    def post(self, request, format=None):  # pylint: disable=redefined-builtin
         denunciable, denunciation = self._get_splitted_data(request)
         saved_denunciable = self._save_serialized(
             denunciable, DenunciableSerializer, request
@@ -102,3 +113,64 @@ class DenunciationCompleteList(APIView):
             )
 
         return denunciable, denunciation
+
+
+class DenunciationQueueViewList(APIView):
+
+    filters = ('start', 'end')
+    queries_map = {
+        'gravity': 'gravity',
+        '-gravity': '-gravity',
+        'date': 'created_at',
+        '-date': '-created_at',
+    }
+
+    def get(self, request, format=None):  # pylint: disable=redefined-builtin
+        data = request.query_params.copy()
+        queryset = self._get_initial_queryset()
+
+        queryset = self._filter_date(queryset, data)
+
+        queries = data.getlist('queries')
+
+        if None not in queries:
+            queryset = self._apply_queries(queryset, queries)
+
+        end_data = {'denunciation_queue': queryset}
+
+        serialized_queryset = DenunciationQueueSerializer(
+            end_data,
+            context={'request': request}
+        )
+
+        return Response(
+            dumps(serialized_queryset.data),
+            status.HTTP_200_OK
+        )
+
+    @staticmethod
+    def _get_initial_queryset():
+        return Denunciation.objects.filter(
+            current_state=WaitingState.objects.last()
+        )
+
+    @staticmethod
+    def _filter_date(queryset, data):
+        start, end = data.get('start', None), data.get('end', None)
+
+        if start is not None and end is not None:
+            queryset = queryset.filter(
+                created_at__gte=start,
+                created_at__lte=end
+            )
+        return queryset
+
+    @classmethod
+    def _apply_queries(cls, queryset, queries_list):
+        def map_query_name(query):
+            return cls.queries_map[query]
+
+        queries_list = map(map_query_name, queries_list)
+        queryset = queryset.order_by(*queries_list)
+
+        return queryset

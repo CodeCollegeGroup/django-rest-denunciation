@@ -3,11 +3,33 @@ from django.db import models
 from domain.models import Domain
 
 
+GRAVITY_MAP = {
+    'High': 2,
+    'Medium': 1,
+    'Low': 0
+}
+
+
+def map_gravity(gravity):
+    if gravity in ('High', 'Medium', 'Low'):
+        gravity = GRAVITY_MAP[gravity]
+    elif gravity in (0, 1, 2):
+        pass
+    else:
+        raise Exception('Gravity can only be 0, 1 or 2 on db')
+
+    return gravity
+
+
 class DenunciationState(SingletonModel):
 
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
     )
+
+    @property
+    def name(self):
+        return self.__class__.__name__.lower()
 
     def specific_delete(self):
         raise self._not_implemented_exception
@@ -65,6 +87,21 @@ class Denunciable(models.Model):
         unique_together = ('denunciable_id', 'denunciable_type')
 
 
+class DenunciationCategory(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    gravity = models.PositiveIntegerField()
+
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        self.gravity = map_gravity(self.gravity)
+
+        super(DenunciationCategory, self).save(*args, **kwargs)
+
+
 class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
@@ -88,6 +125,10 @@ class Denunciation(models.Model):
 
     justification = models.CharField(max_length=500)
 
+    created_at = models.DateField(auto_now_add=True)
+
+    gravity = models.IntegerField(editable=False)
+
     _initial_state = WaitingState
 
     def delete_denunciation(self):
@@ -110,23 +151,12 @@ class Denunciation(models.Model):
         initial_state = self._initial_state.objects.create()
         self.current_state = initial_state
 
+        if self.id:
+            categories_gravities = [category.gravity for category in
+                                    self.categories.all()]
+            categories_gravities += [0]
+        else:
+            categories_gravities = [0]
+        self.gravity = max(categories_gravities)
+
         super(Denunciation, self).save(*args, **kwargs)
-
-
-class DenunciationCategory(models.Model):
-
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-    )
-
-    GRAVITY_CHOICES = (
-        ('High', 'H'),
-        ('Medium', 'M'),
-        ('Low', 'L')
-    )
-
-    gravity = models.CharField(
-        max_length=10,
-        choices=GRAVITY_CHOICES,
-    )
