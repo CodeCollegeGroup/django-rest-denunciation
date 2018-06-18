@@ -185,7 +185,9 @@ class TestDenunciation(test.TestCase):
         response = self.client.patch(
             '/api/denunciations/denunciation/1/done/',
             dumps(self.format_dict(self.json5)),
-            content_type='application/json'
+            content_type='application/json',
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -232,7 +234,8 @@ class TestDenunciation(test.TestCase):
 
         response = self.client.delete(
             '/api/denunciations/denunciation/1/',
-            follow=False
+            format='json',
+            **{'HTTP_KEY': self.dom.key}
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
