@@ -24,6 +24,7 @@ from denunciation.models import (
     Denunciable,
     Denouncer,
     DenunciationCategory,
+    DenunciationState,
     WaitingState,
     NullState,
     EvaluatingState,
@@ -61,7 +62,7 @@ def make_nullstate():
 
 def make_evaluatingstate(denunciation):
 
-    if denunciation.current_state.name == 'WaitingState':
+    if denunciation.current_state.type_name == 'waitingstate':
         return EvaluatingState.objects.create()
     else:
         return None
@@ -69,7 +70,7 @@ def make_evaluatingstate(denunciation):
 
 def make_waitingstate(denunciation):
 
-    if denunciation.current_state.name == 'NullState':
+    if denunciation.current_state.type_name == 'nullstate':
         return WaitingState.objects.create()
     else:
         return None
@@ -77,7 +78,7 @@ def make_waitingstate(denunciation):
 
 def make_evaluate(data, denunciation):
     try:
-        if denunciation.current_state.name == 'EvaluatingState':
+        if denunciation.current_state.type_name == 'evaluatingstate':
             denunciation.evaluation = data['evaluation']
             denunciation.fake = data['fake']
             denunciation.current_state = DoneState.objects.create()
@@ -204,7 +205,7 @@ class DenunciationList(APIView):
                     denunciation, request
                 )
 
-                if denunciation.current_state.name == 'DoneState':
+                if denunciation.current_state.type_name == 'donestate':
                     denunciation_dic['evaluate'] = denunciation.evaluate
 
                 denunciations_dic_list.append(denunciation_dic)
