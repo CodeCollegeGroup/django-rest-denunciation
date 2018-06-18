@@ -1,6 +1,7 @@
 from singleton_model import SingletonModel
 from django.db import models
 from domain.models import Domain
+from django.core.mail import send_mail
 
 
 class DenunciationState(SingletonModel):
@@ -39,7 +40,14 @@ class EvaluatingState(DenunciationState):
         pass
 
     def specific_notify_denunciator(self):
-        pass
+        for denunciation in self.denunciations:
+        denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
+        send_mail('Denunciaton is being evalueted',
+                  'Here is the message.',
+                  'from@example.com',
+                  [denouncer.email],
+                  fail_silently=False,
+                 )
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
@@ -53,7 +61,14 @@ class WaitingState(DenunciationState):
         pass
 
     def specific_notify_denunciator(self):
-        pass
+        for denunciation in self.denunciations:
+        denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
+        send_mail('Denunciaton is awaiting',
+                  'Here is the message.',
+                  'from@example.com',
+                  [denouncer.email],
+                  fail_silently=False,
+                 )
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
@@ -67,7 +82,14 @@ class DoneState(DenunciationState):
         pass
 
     def specific_notify_denunciator(self):
-        pass
+        for denunciation in self.denunciations:
+        denouncer = Denouncer.objects.get(id=denunciation.denouncer.id)
+        send_mail('Denunciaton is done',
+                  'Here is the message.',
+                  'from@example.com',
+                  [denouncer.email],
+                  fail_silently=False,
+                 )
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
