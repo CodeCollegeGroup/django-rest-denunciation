@@ -1,8 +1,10 @@
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django_rest_denunciation.utils import except_smpt
 from .models import Domain, DomainAdministrator
 from .serializers import DomainSerializer, DomainAdministratorSerializer
@@ -12,6 +14,7 @@ class DomainViewSet(viewsets.ModelViewSet):
 
     serializer_class = DomainSerializer
     queryset = Domain.objects.all()
+    permission_classes = (IsAuthenticated,)
 
     def create(self, request, *args, **kwargs):
         data = request.data.dict()
@@ -54,32 +57,16 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
     serializer_class = DomainAdministratorSerializer
     queryset = DomainAdministrator.objects.all()
 
+    @staticmethod
     @except_smpt
     @action(methods=['put'], detail=False)
-    def reset_password(self, request):  # pylint: disable=no-self-use
+    def reset_password(request):
         """Reset password sending in e-mail"""
 
         data = request.data
         user = get_object_or_404(DomainAdministrator, email=data.get('email'))
         user.recover_password()
         return Response({'ok': 'password reseted'}, status.HTTP_200_OK)
-
-    @except_smpt
-    @action(methods=['get'], detail=False)
-    def recover_domain_key(self, request):  # pylint: disable=no-self-use
-        """Send Domain key to the domain administrator"""
-
-        data = request.query_params.copy()
-        domain = get_object_or_404(
-            Domain, application_name=data.get('application_name')
-        )
-        admin = domain.administrator
-        message = """Olá,\nA chave do seu domínio '{}' é\n
-                     Chave: {}""".format(domain.uri, domain.key)
-        admin.send_email(
-            'Equipe Django Rest Denunciation', message
-        )
-        return Response({'ok': 'domain key recovered'}, status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -93,3 +80,25 @@ class DomainAdministratorViewSet(viewsets.ModelViewSet):
 
         return Response({'ok': 'administrator registered'},
                         status.HTTP_200_OK)
+
+
+class RecoverDomainKey(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    @except_smpt
+    def get(self, request, format=None):
+        # pylint: disable=redefined-builtin,no-self-use
+        """Send Domain key to the domain administrator"""
+
+        data = request.query_params.copy()
+        domain = get_object_or_404(
+            Domain, application_name=data.get('application_name')
+        )
+        admin = domain.administrator
+        message = """Olá,\nA chave do seu domínio '{}' é\n
+                     Chave: {}""".format(domain.uri, domain.key)
+        admin.send_email(
+            'Equipe Django Rest Denunciation', message
+        )
+        return Response({'ok': 'domain key recovered'}, status.HTTP_200_OK)

@@ -4,7 +4,11 @@ from rest_framework_jwt.views import (
     obtain_jwt_token,
     refresh_jwt_token
 )
-from .views import DomainViewSet, DomainAdministratorViewSet
+from .views import (
+    DomainViewSet,
+    DomainAdministratorViewSet,
+    RecoverDomainKey
+)
 
 ROUTER = routers.DefaultRouter()
 ROUTER.register(r'domains', DomainViewSet)
@@ -15,4 +19,6 @@ urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 urlpatterns += [
     url(r'authenticate/$', obtain_jwt_token),
     url(r'refresh/$', refresh_jwt_token),
+    url(r'recover-domain-key/$',
+        RecoverDomainKey.as_view()),
 ]
