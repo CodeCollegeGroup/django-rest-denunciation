@@ -73,8 +73,8 @@ class TestDenunciationStates(test.TestCase):
 class TestDenunciation(test.TestCase):
 
     def setUp(self):
-        DenunciationCategory.objects.create(name='Racismo', gravity='H')
-        DenunciationCategory.objects.create(name='Plágio', gravity='M')
+        DenunciationCategory.objects.create(name='Racismo', gravity='High')
+        DenunciationCategory.objects.create(name='Plágio', gravity='Medium')
         self.adm = DomainAdministrator.objects.create(id=1)
         self.dom = Domain()
         self.dom.application_name = "www.test.com"
@@ -180,7 +180,7 @@ class TestDenunciation(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         denunciation = Denunciation.objects.get(pk=1)
-        self.assertEqual(denunciation.current_state.name, 'EvaluatingState')
+        self.assertEqual(denunciation.current_state.type_name, 'evaluatingstate')
 
         response = self.client.patch(
             '/api/denunciations/denunciation/1/done/',
@@ -212,7 +212,7 @@ class TestDenunciation(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         denunciation = Denunciation.objects.get(pk=1)
-        self.assertEqual(denunciation.current_state.name, 'NullState')
+        self.assertEqual(denunciation.current_state.type_name, 'nullstate')
 
         response = self.client.get(
             '/api/denunciations/denunciation/1/waiting/',
