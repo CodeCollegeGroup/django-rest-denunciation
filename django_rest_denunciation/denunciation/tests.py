@@ -1,10 +1,17 @@
 from json import dumps
-from .models import Denunciation, NullState, WaitingState
+import datetime
 from django import test
+from django.urls import reverse
 from rest_framework import status
+from domain.factories import (
+    DomainFactory
+)
 from .models import (
     Denunciable,
-    DenunciationCategory
+    DenunciationCategory,
+    Denunciation,
+    NullState,
+    WaitingState
 )
 from domain.models import Domain, DomainAdministrator
 
@@ -33,18 +40,14 @@ class TestDenunciationStates(test.TestCase):
         self.denunciation.save()
         self.denunciation.set_state(self.null_state)
 
-        self.assertTrue(
-            isinstance(self.denunciation.current_state, NullState)
-        )
+        self.assertTrue(isinstance(self.denunciation.current_state, NullState))
 
     def test_save(self):
         self.denunciation.save()
 
         # pylint: disable=protected-access
-        self.assertTrue(
-            isinstance(self.denunciation.current_state,
-                       self.denunciation._initial_state)
-        )
+        self.assertTrue(isinstance(self.denunciation.current_state,
+                        self.denunciation._initial_state))
         # pylint: disable=protected-access
 
     def test_delete_denunciation(self):
@@ -234,3 +237,163 @@ class TestDenunciation(test.TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Denunciation.objects.count(), 0)
+
+class TestDenunciationQueue(test.TestCase):
+
+    def setUp(self):
+        self.denunciable = Denunciable.objects.create(
+            denunciable_id=1,
+            denunciable_type='type'
+        )
+
+        self.denunciation = Denunciation.objects.create(
+            justification='justification_1',
+            denunciable=self.denunciable
+        )
+        self.denunciation_url = self._get_detail_url(self.denunciation.pk)
+        self.client = test.Client()
+
+    def test_get_queue(self):
+        response = self.client.get('/api/denunciations/denunciation-queue/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            ('{{"denunciation_queue": ["{}"]}}').format(self.denunciation_url)
+        )
+
+    def test_get_queue_filtering(self):
+        today = str(datetime.date.today())
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'start': today, 'end': today}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            ('{{"denunciation_queue": ["{}"]}}').format(self.denunciation_url)
+        )
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'start': '1980-06-12', 'end': today}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            ('{{"denunciation_queue": ["{}"]}}').format(self.denunciation_url)
+        )
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'start': '1980-06-12', 'end': '2018-06-16'}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, ('{"denunciation_queue": []}'))
+
+    def test_get_queue_ordering(self):
+        denunciation2 = Denunciation.objects.create(
+            justification='justification_2',
+            denunciable=self.denunciable
+        )
+        denunciation2.created_at = str(datetime.date(2018, 6, 12))
+        denunciation2.save()
+        category1 = DenunciationCategory.objects.create(name='Racismo',
+                                                             gravity='High')
+        category2 = DenunciationCategory.objects.create(name='Plágio',
+                                                             gravity='High')
+        self.denunciation.categories.add(category1)
+        denunciation2.categories.add(category2)
+        self.denunciation.save()
+        denunciation2.save()
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'queries': ['gravity', 'date']}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, (
+            '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(denunciation2.pk),
+                self._get_detail_url(self.denunciation.pk),
+        ))
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'queries': ['-gravity', 'date']}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, (
+            '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(denunciation2.pk),
+                self._get_detail_url(self.denunciation.pk)
+        ))
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'queries': ['-date', 'gravity']}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, (
+            '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(self.denunciation.pk),
+                self._get_detail_url(denunciation2.pk),
+        ))
+
+        response = self.client.get(
+            '/api/denunciations/denunciation-queue/',
+            {'queries': ['-date', '-gravity']}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, (
+            '{{"denunciation_queue": ["{}", "{}"]}}').format(
+                self._get_detail_url(self.denunciation.pk),
+                self._get_detail_url(denunciation2.pk)
+        ))
+
+    @staticmethod
+    def _get_detail_url(pk):
+        path = reverse('denunciation-detail', kwargs={'pk': pk})
+        denunciation_url = 'http://testserver' + path
+
+        return denunciation_url
+
+
+class TestDenunciationCategory(test.TestCase):
+
+    def setUp(self):
+        self.category = DenunciationCategory.objects.create(name='Racismo',
+                                                            gravity=2)
+        self.client = test.Client()
+
+    def test_get_gravity_representation(self):
+        category_url = reverse('denunciationcategory-detail',
+                               kwargs={'pk': self.category.pk})
+
+        response = self.client.get(category_url)
+
+        gravity_representation = 'High'
+        saved_gravity = response.data['gravity']
+        self.assertEqual(saved_gravity, gravity_representation)
+
+    def test_post_gravity_representation(self):
+        data = {'name': 'Plágio',
+                'gravity': 'Medium'}
+
+        response = self.client.post(
+            '/api/denunciations/denunciation-category/',
+            dumps(data),
+            content_type='application/json'
+        )
+
+        saved_gravity = DenunciationCategory.objects.last().gravity
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(saved_gravity, 1)

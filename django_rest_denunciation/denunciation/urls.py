@@ -5,13 +5,16 @@ from .views import (
     DenunciableViewSet,
     DenunciationCategoryViewSet,
     DenouncerViewSet,
-    change_denunciation_state
+    change_denunciation_state,
+    DenunciationQueueViewList,
+    DenunciationStateViewSet
 )
 
 ROUTER = routers.DefaultRouter()
 ROUTER.register(r'denunciable', DenunciableViewSet)
 ROUTER.register(r'denunciation-category', DenunciationCategoryViewSet)
 ROUTER.register(r'denouncer', DenouncerViewSet)
+ROUTER.register(r'denunciation-state', DenunciationStateViewSet)
 
 urlpatterns = ROUTER.urls
 
@@ -29,5 +32,9 @@ urlpatterns += [
     url(
         r'denunciation/(?P<pk>[0-9]+)/(?P<name>[a-z]+)/$',
         change_denunciation_state
+    ),
+    url(
+        r'denunciation-queue', 
+        DenunciationQueueViewList.as_view()
     )
 ]

@@ -1,0 +1,49 @@
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Spam
+    gravity: 0
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Pornografia
+    gravity: 1
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Odio e Bullyng
+    gravity: 1
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Auto Mutilacao
+    gravity: 2
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Violencia
+    gravity: 1
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Pornografia Infantil
+    gravity: 2
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Atividades Ilegais
+    gravity: 0
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Conteudo Enganoso
+    gravity: 0
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Plagio
+    gravity: 0
+
+- model: denunciation.DenunciationCategory
+  fields:
+    name: Outros
+    gravity: 0
