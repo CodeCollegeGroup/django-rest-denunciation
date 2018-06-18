@@ -160,54 +160,29 @@ class DenunciationList(APIView):
         return denunciation_dict
 
     # index
-    def get(self, request, format=None):
+    def get(self, request, format=None):  # pylint: disable=redefined-builtin
 
-        domain = fetch_domain_get(request)
+        domain = get_object_or_404(Domain, key=request.META['HTTP_KEY'])
 
-        if domain is not None:
-            denunciations = Denunciation.objects.filter(domain_id=domain.id)
+        denunciations = Denunciation.objects.filter(domain_id=domain.id)
 
-            denunciations_dic_list = []
+        denunciations_dic_list = []
 
-            for denunciation in denunciations:
+        for denunciation in denunciations:
 
-                denunciation_dic = self.dict_denunciation_maker(
-                    denunciation, request
-                )
-
-                if denunciation.current_state.type_name == 'donestate':
-                    denunciation_dic['evaluate'] = denunciation.evaluate
-
-                denunciations_dic_list.append(denunciation_dic)
-
-            return Response(denunciations_dic_list)
-        else:
-            return Response(status=400)
-
-    @staticmethod
-    def getDenunciable(d_id, d_type):
-
-        denunciable_count = Denunciable.objects.filter(
-            denunciable_id=d_id,
-            denunciable_type=d_type
-        ).count()
-        if denunciable_count == 1:
-            return Denunciable.objects.get(
-                denunciable_id=d_id, denunciable_type=d_type
+            denunciation_dic = self.dict_denunciation_maker(
+                denunciation, request
             )
-        else:
-            return None
+
+            if denunciation.current_state.type_name == 'donestate':
+                denunciation_dic['evaluate'] = denunciation.evaluate
+
+            denunciations_dic_list.append(denunciation_dic)
+
+        return Response(denunciations_dic_list)
 
     @staticmethod
-    def getDenouncer(email):
-
-        if Denouncer.objects.filter(email=email).count() == 1:
-            return Denouncer.objects.get(email=email)
-        else:
-            return None
-
-    @staticmethod
-    def getCategories(names):
+    def get_categories(names):
 
         list_categories = []
 
@@ -222,59 +197,49 @@ class DenunciationList(APIView):
         return list_categories
 
     @staticmethod
-    def validate_keys(data):
+    def verify_denunciable(data):
 
         try:
-            data['denunciable']
-            data['denunciable']['denunciable_id']
-            data['denunciable']['denunciable_type']
-
-            data['denunciation']
-            data['key']
-        except KeyError:
-            raise ValidationError(code=status.HTTP_400_BAD_REQUEST)
-
-    def verify_denunciable(self, data):
-        denunciable = self.getDenunciable(
-            data['denunciable']['denunciable_id'],
-            data['denunciable']['denunciable_type']
-        )
-
-        if not denunciable:
+            denunciable = Denunciable.objects.get(
+                denunciable_id=data['denunciable']['denunciable_id'],
+                denunciable_type=data['denunciable']['denunciable_type']
+            )
+        except ObjectDoesNotExist:
             data_denunciable = data['denunciable']
             denunciable_serializer = DenunciableSerializer(
                 data=data_denunciable
             )
-            if denunciable_serializer.is_valid():
-                denunciable_serializer.save()
-                denunciable = Denunciable.objects.get(
-                    denunciable_id=data['denunciable']['denunciable_id'],
-                    denunciable_type=data['denunciable']['denunciable_type']
-                )
-            else:
-                return None
+            denunciable_serializer.is_valid()
+            denunciable_serializer.save()
+            denunciable = Denunciable.objects.get(
+                denunciable_id=data['denunciable']['denunciable_id'],
+                denunciable_type=data['denunciable']['denunciable_type']
+            )
 
         return denunciable
 
-    def verify_denouncer(self, data):
-        denouncer = self.getDenouncer(data['denunciation']['denouncer'])
-        if denouncer is None:
+    @staticmethod
+    def verify_denouncer(data):
+
+        try:
+            denouncer = Denouncer.objects.get(
+                email=data['denunciation']['denouncer']
+            )
+        except ObjectDoesNotExist:
             denouncer_serializer = DenouncerSerializer(
                 data={'email': data['denunciation']['denouncer']}
             )
-            if denouncer_serializer.is_valid():
-                denouncer_serializer.save()
-                denouncer = Denouncer.objects.get(
-                    email=data['denunciation']['denouncer']
-                )
-            else:
-                return None
+            denouncer_serializer.is_valid()
+            denouncer_serializer.save()
+            denouncer = Denouncer.objects.get(
+                email=data['denunciation']['denouncer']
+            )
 
         return denouncer
 
     def verify_categories(self, data, denunciation):
         if 'categories' in data['denunciation']:
-            categories = self.getCategories(
+            categories = self.get_categories(
                 data['denunciation']['categories']
             )
 
