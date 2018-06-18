@@ -1,6 +1,6 @@
 from django.conf.urls import url
-from denunciation.views import DenunciationList, DenunciationDetails
 from rest_framework import routers
+from denunciation.views import DenunciationList, DenunciationDetails
 from .views import (
     DenunciableViewSet,
     DenunciationCategoryViewSet,
@@ -16,7 +16,7 @@ ROUTER.register(r'denunciation-category', DenunciationCategoryViewSet)
 ROUTER.register(r'denouncer', DenouncerViewSet)
 ROUTER.register(r'denunciation-state', DenunciationStateViewSet)
 
-urlpatterns = ROUTER.urls
+urlpatterns = ROUTER.urls  # pylint: disable=invalid-name
 
 urlpatterns += [
     url(
