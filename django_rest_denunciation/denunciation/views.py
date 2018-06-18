@@ -1,11 +1,9 @@
 from json import dumps
-from django.urls import reverse
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework.response import Response
-from rest_framework import status
 from json import loads
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
@@ -54,6 +52,26 @@ def fetch_domain_get(req):
         return Domain.objects.get(key=req.META['HTTP_KEY'])
     else:
         return None
+
+
+def get_object(pk):
+
+    try:
+        return Denunciation.objects.get(pk=pk)
+    except ObjectDoesNotExist:
+        raise Http404
+
+def verify_d_domain(pk, request):
+
+    domain = fetch_domain_get(request)
+    denunciation = get_object(pk)
+    domain_d = Domain.objects.get(id=denunciation.domain.id)
+
+    if domain is not None and domain == domain_d:
+        return True
+    else:
+        return False
+    
 
 
 def make_nullstate():
@@ -115,7 +133,7 @@ def change_denunciation_state(request, pk, name):
 
     if request.method == 'GET':
 
-        if fetch_domain_get(request):
+        if verify_d_domain(pk, request):
             if name in ['null', 'evaluating', 'waiting']:
                 new_state = get_request_cond(name, denunciation)
             else:
@@ -133,7 +151,7 @@ def change_denunciation_state(request, pk, name):
 
         data = loads(request.body.decode())
 
-        if fetch_domain_post(data):
+        if verify_d_domain(pk, request):
             if name == 'done':
                 return make_evaluate(data, denunciation)
             else:
@@ -363,21 +381,12 @@ class DenunciationList(APIView):
 
 class DenunciationDetails(APIView):
 
-    def get_object(self, pk):
-
-        try:
-            return Denunciation.objects.get(pk=pk)
-        except ObjectDoesNotExist:
-            raise Http404
-
     # show
     def get(self, request, pk, format=None):
 
-        domain = fetch_domain_get(request)
+        if verify_d_domain(pk, request):
 
-        if domain is not None:
-
-            denunciation = self.get_object(pk)
+            denunciation = get_object(pk)
             d_dict = DenunciationList.dict_denunciation_maker(
                 denunciation, request
             )
@@ -389,10 +398,13 @@ class DenunciationDetails(APIView):
     # delete
     def delete(self, request, pk, format=None):
 
-        denunciation = self.get_object(pk)
-        denunciation.delete()
+        if verify_d_domain(pk, request):
+            denunciation = get_object(pk)
+            denunciation.delete()
 
-        return Response(status=204)
+            return Response(status=204)
+        else:
+            return Response(status=400)
 
 
 class DenunciationQueueViewList(APIView):
