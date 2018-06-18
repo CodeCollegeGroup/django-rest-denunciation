@@ -253,7 +253,8 @@ class DenunciationList(APIView):
 
         return True
 
-    def save_denunciation(self, data, denunciable, denouncer):
+    @staticmethod
+    def save_denunciation(data, denunciable, denouncer):
         denunciation = Denunciation()
         denunciation.current_state = WaitingState.objects.create()
         denunciation.justification = data['denunciation']['justification']
@@ -266,40 +267,34 @@ class DenunciationList(APIView):
         return denunciation
 
     # create
-    def post(self, request, format=None):
+    def post(self, request, format=None):  # pylint: disable=redefined-builtin
 
         denouncer = None
         data = loads(request.body.decode())
-        self.validate_keys(data)
-        if fetch_domain_post(data):
-            denunciable = self.verify_denunciable(data)
-            if denunciable is None:
+
+        get_object_or_404(Domain, key=data['key'])
+
+        denunciable = self.verify_denunciable(data)
+        if 'denouncer' in data.get('denunciation'):
+            denouncer = self.verify_denouncer(data)
+
+        try:
+            denunciation = self.save_denunciation(
+                data, denunciable, denouncer
+            )
+            if not self.verify_categories(data, denunciation):
                 return Response(status=400)
-
-            if 'denouncer' in data['denunciation']:
-                denouncer = self.verify_denouncer(data)
-                if denouncer is None:
-                    return Response(status=400)
-
-            try:
-                denunciation = self.save_denunciation(
-                    data, denunciable, denouncer
-                )
-
-                if not self.verify_categories(data, denunciation):
-                    return Response(status=400)
-            except ValidationError:
-                return Response(status=400)
-
-            return Response(status=201)
-        else:
+        except ValidationError:
             return Response(status=400)
+
+        return Response(status=201)
 
 
 class DenunciationDetails(APIView):
 
     # show
     def get(self, request, pk, format=None):
+        # pylint: disable=redefined-builtin
 
         if verify_d_domain(pk, request):
 
@@ -314,6 +309,7 @@ class DenunciationDetails(APIView):
 
     # delete
     def delete(self, request, pk, format=None):
+        # pylint: disable=redefined-builtin
 
         if verify_d_domain(pk, request):
             denunciation = get_object(pk)
