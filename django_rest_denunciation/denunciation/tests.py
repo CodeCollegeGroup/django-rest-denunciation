@@ -9,6 +9,9 @@ from .models import (
     Denunciable,
     DenunciationCategory
 )
+from domain.factories import (
+    DomainFactory
+)
 
 
 class TestDenunciation(test.TestCase):
@@ -102,6 +105,7 @@ class TestDenunciationComplete(test.TestCase):
         self.client = test.Client()
 
     def test_create(self):
+        domain = DomainFactory()
         response = self.client.post(
             '/api/denunciations/denunciation-complete/',
             dumps({"denunciable": {
@@ -110,7 +114,12 @@ class TestDenunciationComplete(test.TestCase):
                   },
                    "denunciation": {
                        "categories": ["Racismo", "Plágio"],
-                       "justification": "copiou imagem racista"
+                       "justification": "copiou imagem racista",
+                       "domain": "http://localhost:8000/api/domains/domains/" +
+                       str(domain.id) + "/",
+                  },
+                   "denouncer": {
+                       "email": "denouncer@test.com"
                   },
             }),
             content_type='application/json'

@@ -1,5 +1,24 @@
 import factory
+from factory.fuzzy import (
+    FuzzyInteger,
+    FuzzyChoice
+)
 from . import models
+from domain.factories import DomainFactory
+
+
+class DenunciableFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.Denunciable
+
+    denunciable_id = FuzzyInteger(0, 1000)
+
+    denunciable_type = FuzzyChoice([
+        'comment',
+        'image',
+        'document'
+    ])
 
 
 class DenunciationFactory(factory.DjangoModelFactory):
@@ -10,6 +29,10 @@ class DenunciationFactory(factory.DjangoModelFactory):
     justification = factory.Faker(
         'word'
     )
+
+    denunciable = DenunciableFactory()
+
+    domain = DomainFactory()
 
 
 class DenunciationStateFactory(factory.DjangoModelFactory):
