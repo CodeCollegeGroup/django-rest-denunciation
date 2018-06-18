@@ -8,13 +8,6 @@ from .models import (
 )
 
 
-class DenunciationCategorySerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = DenunciationCategory
-        fields = '__all__'
-
-
 class DenunciableSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
@@ -56,7 +49,7 @@ class GravitedSerializer(serializers.HyperlinkedModelSerializer):
 class DenunciationSerializer(GravitedSerializer):
 
     class Meta:
-        model = Denouncer
+        model = Denunciation
         fields = '__all__'
         read_only_fields = ('current_state', 'gravity')
 
@@ -64,7 +57,7 @@ class DenunciationSerializer(GravitedSerializer):
 class DenunciationCategorySerializer(GravitedSerializer):
 
     class Meta:
-        model = Denunciation
+        model = DenunciationCategory
         fields = '__all__'
 
 
