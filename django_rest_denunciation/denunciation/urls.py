@@ -30,7 +30,7 @@ urlpatterns += [
         name='denunciation-detail'
     ),
     url(
-        r'denunciation/(?P<pk>[0-9]+)/(?P<name>[a-z]+)/$',
+        r'denunciation/(?P<pk>[0-9]+)/(?P<state>[a-z]+)/$',
         change_denunciation_state
     ),
     url(

@@ -1,30 +1,30 @@
 from json import dumps, loads
 from rest_framework import viewsets, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
-from django.http import Http404
-from django.core.exceptions import ObjectDoesNotExist
-from denunciation.models import (
+from domain.models import Domain
+from django_rest_denunciation.views_utils import (
+    add_denouncer,
+    get_main_urls,
+    get_categories_urls,
+    get_dict_denunciation,
+    verify_domain_key,
+    evaluate_denunciation,
+    get_request_cond,
+    verify_denunciable,
+    verify_denouncer,
+    verify_categories
+)
+from .models import (
     Denunciation,
     Denunciable,
     Denouncer,
     DenunciationCategory,
     DenunciationState,
-    WaitingState,
-    NullState,
-    EvaluatingState,
-    DoneState
+    WaitingState
 )
-from denunciation.auxiliary_methods import (
-    add_denouncer,
-    get_main_urls,
-    get_categories_urls,
-    get_dict_denunciation
-)
-from domain.models import Domain
 from .serializers import (
     DenunciableSerializer,
     DenunciationCategorySerializer,
@@ -34,84 +34,22 @@ from .serializers import (
 )
 
 
-def fetch_domain_post(data):
-
-    return bool(Domain.objects.filter(key=data['key']).count() == 1)
-
-
-def get_object(pk):
-
-    try:
-        return Denunciation.objects.get(pk=pk)
-    except ObjectDoesNotExist:
-        raise Http404
-
-
-def verify_d_domain(pk, request):
-
-    domain = get_object_or_404(Domain, key=request.META['HTTP_KEY'])
-    denunciation = get_object(pk)
-    domain_d = Domain.objects.get(id=denunciation.domain.id)
-
-    return bool(domain is not None and domain == domain_d)
-
-
-def make_evaluate(data, denunciation):
-
-    if denunciation.current_state.type_name == 'evaluatingstate':
-        denunciation.evaluation = data.get('evaluation')
-        denunciation.fake = data.get('fake')
-        denunciation.current_state = DoneState.objects.create()
-        denunciation.save()
-        if denunciation.fake and denunciation.denouncer is not None:
-            denouncer = denunciation.denouncer
-            denouncer.fake_denunciation += 1
-    else:
-        return Response(status=400)
-
-    return Response(status=200)
-
-
-def get_request_cond(name, denunciation):
-
-    den_state = denunciation.current_state.type_name
-    if name == 'null':
-        denunciation.current_state = NullState.objects.create()
-    elif name == 'evaluating' and den_state == 'waitingstate':
-        denunciation.current_state = EvaluatingState.objects.create()
-    elif name == 'waiting' and den_state == 'nullstate':
-        denunciation.current_state = WaitingState.objects.create()
-
-    return denunciation
-
-
 @api_view(['GET', 'PATCH'])
-def change_denunciation_state(request, pk, name):
-
+def change_denunciation_state(request, pk, state):
     denunciation = get_object_or_404(Denunciation, pk=pk)
-    response = Response()
 
-    if not verify_d_domain(pk, request):
-        response = Response(status=status.HTTP_400_BAD_REQUEST)
+    verify_domain_key(pk, request)
 
-    if request.method == 'GET':
-
-        if name in ['null', 'evaluating', 'waiting']:
-            denunciation = get_request_cond(name, denunciation)
-            denunciation.save()
-        else:
-            response = Response(status=status.HTTP_400_BAD_REQUEST)
-
+    if request.method == 'GET' and state in ('null', 'evaluating', 'waiting'):
+        denunciation = get_request_cond(state, denunciation)
+        denunciation.save()
     elif request.method == 'PATCH':
-
         data = loads(request.body.decode())
 
-        if name == 'done':
-            return make_evaluate(data, denunciation)
+        if state == 'done':
+            evaluate_denunciation(data, denunciation)
 
-        response = Response(status=status.HTTP_400_BAD_REQUEST)
-
-    return response
+    return Response({'ok': 'State was changed'}, status.HTTP_200_OK)
 
 
 class DenunciableViewSet(viewsets.ModelViewSet):
@@ -141,15 +79,13 @@ class DenunciationStateViewSet(viewsets.ModelViewSet):
 class DenunciationList(APIView):
 
     @staticmethod
-    def dict_denunciation_maker(denunciation, request):
-
+    def make_denunciation_dict(denunciation, request):
         url, url_denunciable = get_main_urls(denunciation)
-
         urls_category = get_categories_urls(denunciation, request)
+        urls_list = (url, url_denunciable, urls_category)
 
-        url_list = [url, url_denunciable, urls_category]
         denunciation_dict = get_dict_denunciation(
-            denunciation, url_list, request
+            denunciation, urls_list, request
         )
 
         if denunciation.denouncer is not None:
@@ -159,165 +95,72 @@ class DenunciationList(APIView):
 
         return denunciation_dict
 
-    # index
     def get(self, request, format=None):  # pylint: disable=redefined-builtin
+        def set_evaluation_states(denunciation):
+            denunciation_dict = self.make_denunciation_dict(denunciation,
+                                                            request)
+            if denunciation.current_state.name == 'donestate':
+                denunciation_dict['evaluation'] = denunciation.evaluation
 
         domain = get_object_or_404(Domain, key=request.META['HTTP_KEY'])
-
         denunciations = Denunciation.objects.filter(domain_id=domain.id)
 
-        denunciations_dic_list = []
+        denunciations_dict_list = [set_evaluation_states(denunciation) for
+                                   denunciation in denunciations]
 
-        for denunciation in denunciations:
-
-            denunciation_dic = self.dict_denunciation_maker(
-                denunciation, request
-            )
-
-            if denunciation.current_state.type_name == 'donestate':
-                denunciation_dic['evaluate'] = denunciation.evaluate
-
-            denunciations_dic_list.append(denunciation_dic)
-
-        return Response(denunciations_dic_list)
-
-    @staticmethod
-    def get_categories(names):
-
-        list_categories = []
-
-        for _name in names:
-            if DenunciationCategory.objects.filter(name=_name).count() == 1:
-                list_categories.append(
-                    DenunciationCategory.objects.get(name=_name)
-                )
-            else:
-                return None
-
-        return list_categories
-
-    @staticmethod
-    def verify_denunciable(data):
-
-        try:
-            denunciable = Denunciable.objects.get(
-                denunciable_id=data['denunciable']['denunciable_id'],
-                denunciable_type=data['denunciable']['denunciable_type']
-            )
-        except ObjectDoesNotExist:
-            data_denunciable = data['denunciable']
-            denunciable_serializer = DenunciableSerializer(
-                data=data_denunciable
-            )
-            denunciable_serializer.is_valid()
-            denunciable_serializer.save()
-            denunciable = Denunciable.objects.get(
-                denunciable_id=data['denunciable']['denunciable_id'],
-                denunciable_type=data['denunciable']['denunciable_type']
-            )
-
-        return denunciable
-
-    @staticmethod
-    def verify_denouncer(data):
-
-        try:
-            denouncer = Denouncer.objects.get(
-                email=data['denunciation']['denouncer']
-            )
-        except ObjectDoesNotExist:
-            denouncer_serializer = DenouncerSerializer(
-                data={'email': data['denunciation']['denouncer']}
-            )
-            denouncer_serializer.is_valid()
-            denouncer_serializer.save()
-            denouncer = Denouncer.objects.get(
-                email=data['denunciation']['denouncer']
-            )
-
-        return denouncer
-
-    def verify_categories(self, data, denunciation):
-        if 'categories' in data['denunciation']:
-            categories = self.get_categories(
-                data['denunciation']['categories']
-            )
-
-            if categories is not None:
-                for category in categories:
-                    denunciation.categories.add(category)
-                    denunciation.save()
-            else:
-                denunciation.delete()
-                return False
-
-        return True
+        return Response(denunciations_dict_list, status.HTTP_200_OK)
 
     @staticmethod
     def save_denunciation(data, denunciable, denouncer):
-        denunciation = Denunciation()
-        denunciation.current_state = WaitingState.objects.create()
-        denunciation.justification = data['denunciation']['justification']
-        denunciation.domain = Domain.objects.get(key=data['key'])
-        denunciation.denunciable = denunciable
+        denunciation = Denunciation(
+            current_state=WaitingState.objects.create(),
+            justification=data['denunciation']['justification'],
+            domain=Domain.objects.get(key=data['key']),
+            denunciable=denunciable,
+        )
+
         if 'denouncer' in data['denunciation']:
             denunciation.denouncer = denouncer
         denunciation.save()
 
         return denunciation
 
-    # create
     def post(self, request, format=None):  # pylint: disable=redefined-builtin
-
-        denouncer = None
         data = loads(request.body.decode())
-
         get_object_or_404(Domain, key=data['key'])
 
-        denunciable = self.verify_denunciable(data)
+        denunciable, denouncer = verify_denunciable(data), None
         if 'denouncer' in data.get('denunciation'):
-            denouncer = self.verify_denouncer(data)
+            denouncer = verify_denouncer(data)
 
-        try:
-            denunciation = self.save_denunciation(
-                data, denunciable, denouncer
-            )
-            if not self.verify_categories(data, denunciation):
-                return Response(status=400)
-        except ValidationError:
-            return Response(status=400)
+        denunciation = self.save_denunciation(data, denunciable, denouncer)
+        verify_categories(data, denunciation)
 
-        return Response(status=201)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class DenunciationDetails(APIView):
 
-    # show
     def get(self, request, pk, format=None):
-        # pylint: disable=redefined-builtin
+        # pylint: disable=redefined-builtin,no-self-use
 
-        if verify_d_domain(pk, request):
+        verify_domain_key(pk, request)
 
-            denunciation = get_object(pk)
-            d_dict = DenunciationList.dict_denunciation_maker(
-                denunciation, request
-            )
+        denunciation = get_object_or_404(Denunciation, pk=pk)
+        denunciation_dict = DenunciationList.make_denunciation_dict(
+            denunciation, request
+        )
 
-            return Response(d_dict)
-        else:
-            return Response(status=400)
+        return Response(denunciation_dict, status.HTTP_200_OK)
 
-    # delete
     def delete(self, request, pk, format=None):
-        # pylint: disable=redefined-builtin
+        # pylint: disable=redefined-builtin,no-self-use
 
-        if verify_d_domain(pk, request):
-            denunciation = get_object(pk)
-            denunciation.delete()
+        verify_domain_key(pk, request)
+        denunciation = get_object_or_404(Denunciation, pk=pk)
+        denunciation.delete()
 
-            return Response(status=204)
-        else:
-            return Response(status=400)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class DenunciationQueueViewList(APIView):
@@ -332,10 +175,9 @@ class DenunciationQueueViewList(APIView):
 
     def get(self, request, format=None):  # pylint: disable=redefined-builtin
         data = request.query_params.copy()
+
         queryset = self._get_initial_queryset()
-
         queryset = self._filter_date(queryset, data)
-
         queries = data.getlist('queries')
 
         if None not in queries:
@@ -344,14 +186,10 @@ class DenunciationQueueViewList(APIView):
         end_data = {'denunciation_queue': queryset}
 
         serialized_queryset = DenunciationQueueSerializer(
-            end_data,
-            context={'request': request}
+            end_data, context={'request': request}
         )
 
-        return Response(
-            dumps(serialized_queryset.data),
-            status.HTTP_200_OK
-        )
+        return Response(dumps(serialized_queryset.data), status.HTTP_200_OK)
 
     @staticmethod
     def _get_initial_queryset():
@@ -365,8 +203,7 @@ class DenunciationQueueViewList(APIView):
 
         if start is not None and end is not None:
             queryset = queryset.filter(
-                created_at__gte=start,
-                created_at__lte=end
+                created_at__gte=start, created_at__lte=end
             )
         return queryset
 

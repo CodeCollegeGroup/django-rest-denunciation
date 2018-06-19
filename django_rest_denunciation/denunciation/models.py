@@ -23,21 +23,30 @@ def map_gravity(gravity):
 
 class DenunciationState(SingletonModel):
 
-    type_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
 
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
     )
-
-    @property
-    def name(self):
-        return self.__class__.__name__.lower()
 
     def specific_delete(self):
         raise self._not_implemented_exception
 
     def specific_notify_denunciator(self):
         raise self._not_implemented_exception
+
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        self.name = self.__class__.__name__.lower()
+        super(DenunciationState, self).save(*args, **kwargs)
+
+
+class DenunciationStateNotImplementedYet(DenunciationState):
+
+    def specific_delete(self):
+        pass
+
+    def specific_notify_denunciator(self):
+        pass
 
 
 class NullState(DenunciationState):
@@ -49,52 +58,17 @@ class NullState(DenunciationState):
     def specific_notify_denunciator(self):
         raise Exception('Specific notifier')
 
-    def save(self, *args, **kwargs):
-        # pylint: disable=arguments-differ
-        self.type_name = 'nullstate'
-        super(NullState, self).save(*args, **kwargs)
+
+class EvaluatingState(DenunciationStateNotImplementedYet):
+    pass
 
 
-class EvaluatingState(DenunciationState):
-
-    def specific_delete(self):
-        pass
-
-    def specific_notify_denunciator(self):
-        pass
-
-    def save(self, *args, **kwargs):
-        # pylint: disable=arguments-differ
-        self.type_name = 'evaluatingstate'
-        super(EvaluatingState, self).save(*args, **kwargs)
+class WaitingState(DenunciationStateNotImplementedYet):
+    pass
 
 
-class WaitingState(DenunciationState):
-
-    def specific_delete(self):
-        pass
-
-    def specific_notify_denunciator(self):
-        pass
-
-    def save(self, *args, **kwargs):
-        # pylint: disable=arguments-differ
-        self.type_name = 'waitingstate'
-        super(WaitingState, self).save(*args, **kwargs)
-
-
-class DoneState(DenunciationState):
-
-    def specific_delete(self):
-        pass
-
-    def specific_notify_denunciator(self):
-        pass
-
-    def save(self, *args, **kwargs):
-        # pylint: disable=arguments-differ
-        self.type_name = 'donestate'
-        super(DoneState, self).save(*args, **kwargs)
+class DoneState(DenunciationStateNotImplementedYet):
+    pass
 
 
 class Denunciable(models.Model):
@@ -204,7 +178,7 @@ class Denunciation(models.Model):
         null=True
     )
 
-    evaluate = models.CharField(max_length=500, default='')
+    evaluation = models.CharField(max_length=500, default='')
 
     fake = models.BooleanField(default=False)
 

@@ -184,7 +184,7 @@ class TestDenunciation(test.TestCase):
 
         denunciation = Denunciation.objects.get(pk=1)
         self.assertEqual(
-            denunciation.current_state.type_name, 'evaluatingstate'
+            denunciation.current_state.name, 'evaluatingstate'
         )
 
         response = self.client.patch(
@@ -219,7 +219,7 @@ class TestDenunciation(test.TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         denunciation = Denunciation.objects.get(pk=1)
-        self.assertEqual(denunciation.current_state.type_name, 'nullstate')
+        self.assertEqual(denunciation.current_state.name, 'nullstate')
 
         response = self.client.get(
             '/api/denunciations/denunciation/1/waiting/',
