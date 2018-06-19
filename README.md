@@ -35,7 +35,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
 * request data:
   * username: String,
   * password: String,
-  * header: 'Contend-type: application/json'
+  * header: 'Content-type: application/json'
 
 * response data:
   * token: String,
@@ -59,7 +59,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
   * Methods allowed: ['PUT']
   * request data:
     * email: String
-    * header: 'Contend-type: application/json'
+    * header: 'Content-type: application/json'
   ```
 
 ## Rotas para Domínios
@@ -73,7 +73,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
     * uri: String
     * application_name: String,
     * administrator: int
-    * header: 'Contend-type: application/json'
+    * header: 'Content-type: application/json'
   ```
 ## Rotas para Denuncias
   
@@ -91,7 +91,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
     * denunciation.categories: String list (optional)
     * denunciation.justification: String (required)
     * denunciation.denouncer: String (optional)
-    * header: 'Contend-type: application/json'
+    * header: 'Content-type: application/json'
     
    GET:
    * request data:
@@ -160,7 +160,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
    * request data:
      * evaluation: String (required)
      * fake: Boolean (required)
-     * header: '**{'HTTP_KEY': 'key'} Contend-type: application/json' (required)
+     * header: '**{'HTTP_KEY': 'key'} Content-type: application/json' (required)
   
   ```
   ## Rotas para Categorias 
@@ -176,6 +176,6 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
     * request data: 
       * name: String (required)
       * gravity: enum('High', 'Medium', 'Low') (required)
-      * header: 'Contend-type: application/json'
+      * header: 'Content-type: application/json'
   ```
       
