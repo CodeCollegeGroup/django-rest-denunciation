@@ -108,6 +108,19 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
       * fake: Boolean (may not be)
     *] 
   ```
+### Rota para listar denuncia com prioridade
+  ```
+   /api/denunciations/denunciation-queue/
+   
+   * Methods allowed: ['GET']
+   * query_params:
+    * start: Date 'yyyy-mm-dd' (optional)
+    * end: Date 'yyyy-mm-dd' (optional)
+    * queries: ['gravity','-gravity','date','-date'] (optional)
+   * response data:
+    * denunciation_queue: list of urls to denunciation
+   
+  ```
 ### Rota para mostrar e deletar uma denuncia
  ```
   /api/denunciations/denunciation/id/
