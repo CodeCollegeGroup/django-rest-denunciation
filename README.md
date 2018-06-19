@@ -108,7 +108,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
       * fake: Boolean (may not be)
     *] 
   ```
-### Rota para listar denuncia com prioridade
+### Rota para listar denuncias com prioridade
   ```
    /api/denunciations/denunciation-queue/
    
