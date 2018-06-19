@@ -145,7 +145,7 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
    
     * require denunciation state be in nullstate
     * request data:
-      * header: '**{'HTTP_KEY': key}' (required)
+      * header: '**{'HTTP_KEY': 'key'}' (required)
   
    /api/denunciations/denunciation/id/evaluating
    
