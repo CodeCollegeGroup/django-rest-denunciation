@@ -75,3 +75,107 @@ e o servidor estará escutando na porta 8000 do localhost, depois é necessário
     * administrator: int
     * header: 'Contend-type: application/json'
   ```
+## Rotas para Denuncias
+  
+### Rota para criação e listagem de denuncias 
+  ```
+  /api/denunciations/denunciation/
+
+  * Methods allowed: ['POST', 'GET']
+  
+  POST:
+  * request data:
+    * key: String (required)
+    * denunciable.denunciable_id: Integer (required)
+    * denunciable.denunciable_type: String (required)
+    * denunciation.categories: String list (optional)
+    * denunciation.justification: String (required)
+    * denunciation.denouncer: String (optional)
+    * header: 'Contend-type: application/json'
+    
+   GET:
+   * request data:
+    * header: '**{'HTTP_KEY': 'key'}' (required)
+   * response data:
+    * list[
+      * url: Link
+      * current_state: String
+      * justification: String
+      * denunciable: Link
+      * categories: Link list (may not be)
+      * denouncer: Link (may not be)
+      * evaluation: String (may not be)
+      * fake: Boolean (may not be)
+    *] 
+  ```
+### Rota para mostrar e deletar uma denuncia
+ ```
+  /api/denunciations/denunciation/id/
+
+  * Methods allowed: ['GET', 'DELETE']
+  
+   GET:
+   * request data:
+    * header: '**{'HTTP_KEY': 'key'}' (required)
+   * response data:
+    * url: Link
+    * current_state: String
+    * justification: String
+    * denunciable: Link
+    * categories: Link list (may not be)
+    * denouncer: Link (may not be)
+    * evaluation: String (may not be)
+    * Fake: Boolean (may not be)
+    
+  DELETE:
+  * request data:
+    * header: '**{'HTTP_KEY': 'key'}' (required) 
+  ```
+  ### Rotas para mudança de estado de uma denuncia
+  ```
+  * Methods allowed: ['GET', 'PATCH']
+  
+   GET:
+   /api/denunciations/denunciation/id/null
+   
+    * request data:
+      * header: '**{'HTTP_KEY': 'key'}' (required)
+  
+   /api/denunciations/denunciation/id/waiting
+   
+    * require denunciation state be in nullstate
+    * request data:
+      * header: '**{'HTTP_KEY': key}' (required)
+  
+   /api/denunciations/denunciation/id/evaluating
+   
+    * require denunciation state be in waitingstate
+    * request data:
+      * header: '**{'HTTP_KEY': 'key'}' (required)
+  
+   PATCH: 
+   /api/denunciations/denunciation/id/done
+   
+   * require denunciation state be in evaluatingstate
+   * request data:
+     * evaluation: String (required)
+     * fake: Boolean (required)
+     * header: '**{'HTTP_KEY': 'key'} Contend-type: application/json' (required)
+  
+  ```
+  ## Rotas para Categorias 
+  
+  ### Rota para criação de categorias
+  ```
+    /api/denunciations/denunciation-categories/
+    
+    * Methods allowed: ['POST']
+    
+    POST:
+     
+    * request data: 
+      * name: String (required)
+      * gravity: enum('High', 'Medium', 'Low') (required)
+      * header: 'Contend-type: application/json'
+  ```
+      
