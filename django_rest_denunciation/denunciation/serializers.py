@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from .models import (
-    Denunciation,
     Denunciable,
     DenunciationCategory,
+    Denouncer,
+    Denunciation,
     DenunciationState
 )
 
@@ -74,4 +75,11 @@ class DenunciationStateSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = DenunciationState
+        fields = '__all__'
+
+
+class DenouncerSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Denouncer
         fields = '__all__'

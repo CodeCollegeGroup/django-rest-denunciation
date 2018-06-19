@@ -23,13 +23,11 @@ def map_gravity(gravity):
 
 class DenunciationState(SingletonModel):
 
+    name = models.CharField(max_length=100)
+
     _not_implemented_exception = NotImplementedError(
         'This method must be implemented at all children classes'
     )
-
-    @property
-    def name(self):
-        return self.__class__.__name__.lower()
 
     def specific_delete(self):
         raise self._not_implemented_exception
@@ -37,10 +35,23 @@ class DenunciationState(SingletonModel):
     def specific_notify_denunciator(self):
         raise self._not_implemented_exception
 
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        self.name = self.__class__.__name__.lower()
+        super(DenunciationState, self).save(*args, **kwargs)
+
+
+class DenunciationStateNotImplementedYet(DenunciationState):
+
+    def specific_delete(self):
+        pass
+
+    def specific_notify_denunciator(self):
+        pass
+
 
 class NullState(DenunciationState):
-    # Exceptions to detect if void methods are being called
 
+    # Exceptions to detect if void methods are being called
     def specific_delete(self):
         raise Exception('Specific deletion')
 
@@ -48,36 +59,21 @@ class NullState(DenunciationState):
         raise Exception('Specific notifier')
 
 
-class EvaluatingState(DenunciationState):
-
-    def specific_delete(self):
-        pass
-
-    def specific_notify_denunciator(self):
-        pass
+class EvaluatingState(DenunciationStateNotImplementedYet):
+    pass
 
 
-class WaitingState(DenunciationState):
-
-    def specific_delete(self):
-        pass
-
-    def specific_notify_denunciator(self):
-        pass
+class WaitingState(DenunciationStateNotImplementedYet):
+    pass
 
 
-class DoneState(DenunciationState):
-
-    def specific_delete(self):
-        pass
-
-    def specific_notify_denunciator(self):
-        pass
+class DoneState(DenunciationStateNotImplementedYet):
+    pass
 
 
 class Denunciable(models.Model):
 
-    denunciable_id = models.IntegerField()
+    denunciable_id = models.IntegerField(default=0)
 
     denunciable_type = models.CharField(
         max_length=100,
@@ -90,7 +86,14 @@ class Denunciable(models.Model):
         )
 
     class Meta:
-        unique_together = ('denunciable_id', 'denunciable_type')
+        unique_together = (("denunciable_id", "denunciable_type"),)
+
+
+class Denouncer(models.Model):
+
+    email = models.CharField(max_length=100, unique=True)
+
+    fake_denunciation = models.IntegerField(default=0)
 
 
 class DenunciationCategory(models.Model):
@@ -112,13 +115,6 @@ class DenunciationCategory(models.Model):
         super(DenunciationCategory, self).save(*args, **kwargs)
 
 
-class Denouncer(models.Model):
-
-    email = models.CharField(max_length=100, unique=True)
-
-    fake_denunciation = models.IntegerField(default=0)
-
-
 class Denunciation(models.Model):
 
     denunciable = models.ForeignKey(
@@ -131,6 +127,7 @@ class Denunciation(models.Model):
     current_state = models.ForeignKey(
         'DenunciationState',
         on_delete=models.CASCADE,
+        null=True,
         help_text='The current state of the denunciation.'
         'it could be Null, Wainting, Evaluating and done.'
     )
@@ -164,14 +161,26 @@ class Denunciation(models.Model):
         'of the denunciation. it could be:0,1,2.'
     )
 
-    denouncer = models.ForeignKey(
-            'denouncer',
-            related_name='denunciations',
-            on_delete=models.CASCADE,
-            null=True
+    _initial_state = WaitingState
+
+    domain = models.ForeignKey(Domain, on_delete=models.SET_NULL, null=True)
+
+    denunciable = models.ForeignKey(
+        'Denunciable',
+        related_name='denunciations',
+        on_delete=models.CASCADE
     )
 
-    _initial_state = WaitingState
+    denouncer = models.ForeignKey(
+        'Denouncer',
+        related_name='denunciations',
+        on_delete=models.CASCADE,
+        null=True
+    )
+
+    evaluation = models.CharField(max_length=500, default='')
+
+    fake = models.BooleanField(default=False)
 
     def delete_denunciation(self):
         self.current_state.specific_delete()
@@ -190,8 +199,6 @@ class Denunciation(models.Model):
 
     def save(self, *args, **kwargs):
         # pylint: disable=arguments-differ
-        initial_state = self._initial_state.objects.create()
-        self.current_state = initial_state
 
         if self.id:
             categories_gravities = [category.gravity for category in
